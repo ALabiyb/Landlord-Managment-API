@@ -13,6 +13,10 @@ pipeline {
         jdk 'jdk21'
     }
 
+    environment {
+        JAVA_HOME = tool 'jdk21'  // Extra safety
+    }
+
     stages {
         stage('Build Artifact') {
             steps {
