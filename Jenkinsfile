@@ -1,6 +1,7 @@
 library identifier: 'jenkins-shared-library@main', retriever: modernSCM([
-        $class: 'GitSCMSourcce',
-        remote: 'https://github.com/ALabiyb/devsecops.git'
+        $class: 'GitSCMSource',
+        remote: 'https://github.com/ALabiyb/devsecops.git',
+        traits: [[$class: 'jenkins.plugins.git.traits.BranchDiscoveryTrait']] // This ensures the library checks out the correct branch (main in my case)
 ])
 
 pipeline {
