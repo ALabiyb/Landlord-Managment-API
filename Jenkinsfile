@@ -1,7 +1,7 @@
 library identifier: 'jenkins-shared-library@main', retriever: modernSCM([
         $class: 'GitSCMSource',
-        remote: 'http://192.168.15.85/softgepg/jenkins/jenkins-shared-library.git',
-        credentialsId: 'Gitlab-credentials-Abubakar'
+        remote: 'http://192.168.15.85/softgepg/jenkins/jenkins-shared-library.git'
+//        credentialsId: 'Gitlab-credentials-Abubakar'
 ])
 
 pipeline {
