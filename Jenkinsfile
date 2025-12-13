@@ -9,6 +9,10 @@ pipeline {
         label 'docker-server'
     }
 
+    tools {
+        jdk 'jdk21'
+    }
+
     stages {
         stage('Build Artifact') {
             steps {
