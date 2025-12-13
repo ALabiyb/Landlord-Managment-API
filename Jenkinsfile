@@ -7,4 +7,14 @@ pipeline {
     agent {
         label 'docker-server'
     }
+
+    stages {
+        stage('Build Artifact') {
+            steps {
+                script {
+                    buildArtifact()
+                }
+            }
+        }
+    }
 }
