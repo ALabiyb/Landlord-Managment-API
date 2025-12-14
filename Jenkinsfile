@@ -17,11 +17,11 @@ pipeline {
     environment {
         JAVA_HOME = tool 'jdk21'  // Extra safety
         BUILD_TOOL= 'maven' // Change to 'npm', 'go', etc. per repo or project
-        GIT_REPO_URL = 'https://github.com/ALabiyb/devsecops.git'
+        GIT_REPO_URL = 'https://github.com/ALabiyb/Landlord-Managment-API.git'
         GIT_CREDENTIALS_ID = 'github-personal-access-token' // Jenkins credential ID for Git access
         BRANCH_NAME = 'main' // Branch to checkout
         NOTIFICATION_EMAIL = 'hackermunim@gmail.com' // Comma-separated emails
-        SLACK_CHANNEL = '#ci-cd-notifications' // Optional Slack channel
+//        SLACK_CHANNEL = '#ci-cd-notifications' // Optional Slack channel
     }
 
     stages {
