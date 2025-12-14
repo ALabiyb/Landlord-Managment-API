@@ -16,13 +16,15 @@ pipeline {
 
     environment {
         JAVA_HOME = tool 'jdk21'  // Extra safety
+        BUILD_TOOL= 'maven' // Change to 'npm', 'go', etc. per repo or project
     }
 
     stages {
         stage('Build Artifact') {
             steps {
                 script {
-                    buildArtifact()
+                    buildArtifact() // Uses env.BUILD_TOOL automatically // Or override: buildArtifact(buildTool: 'npm')
+                    // It will auto-detect based on files (pom.xml → maven, package.json → npm, etc.)
                 }
             }
         }
