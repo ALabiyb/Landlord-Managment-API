@@ -154,7 +154,8 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.11.0</version> <!-- Use a stable version -->
+<!--				<version>3.11.0</version> &lt;!&ndash; Use a stable version &ndash;&gt;-->
+				<version>3.14.1</version>
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>

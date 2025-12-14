@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:15
     environment:
       POSTGRES_DB: landlord_management_tz
       POSTGRES_USER: postgres
