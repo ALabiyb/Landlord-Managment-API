@@ -41,16 +41,6 @@ pipeline {
                             subject: "🚀 Pipeline Started: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                             recipients: env.NOTIFICATION_EMAIL,
                             triggeredBy: triggeredBy
-//                            data: [
-//                                    JOB_NAME: env.JOB_NAME,
-//                                    BUILD_NUMBER: env.BUILD_NUMBER,
-//                                    BUILD_URL: env.BUILD_URL,
-//                                    TRIGGERED_BY: triggeredBy,
-//                                    BRANCH: env.BRANCH_NAME,
-//                                    BUILD_STATUS: 'STARTED',
-//                                    GIT_COMMIT: env.GIT_COMMIT,
-//                                    GIT_AUTHOR: env.GIT_AUTHOR
-//                            ]
                     )
                 }
             }
@@ -61,6 +51,33 @@ pipeline {
                 script {
                     buildArtifact() // Uses env.BUILD_TOOL automatically // Or override: buildArtifact(buildTool: 'npm')
                     // It will auto-detect based on files (pom.xml → maven, package.json → npm, etc.)
+                }
+            }
+        }
+
+        stage('Unit Tests - JUnit and Jacoco') {
+            steps {
+                script {
+                    echo "Running unit tests..."
+                }
+            }
+        }
+
+        stage('Mutation Tests - PIT') {
+            steps {
+                script {
+                    echo "Running mutation tests..."
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    sonarSast(
+                            projectKey: 'landlord-management-api',
+                            projectName: 'Landlord Management API'
+                    )
                 }
             }
         }
