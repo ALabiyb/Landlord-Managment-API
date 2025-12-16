@@ -99,7 +99,7 @@ pipeline {
         always {
             dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
         }
-        succees {
+        success {
             script {
                 def triggeredBy = detectBuildTrigger()
                 sendCompletionNotification(
