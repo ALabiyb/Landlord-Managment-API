@@ -16,12 +16,14 @@ pipeline {
 
     environment {
         JAVA_HOME = tool 'jdk21'  // Extra safety
-        BUILD_TOOL= 'maven' // Change to 'npm', 'go', etc. per repo or project
+        BUILD_TOOL = 'maven' // Change to 'npm', 'go', etc. per repo or project
         GIT_REPO_URL = 'https://github.com/ALabiyb/Landlord-Managment-API.git'
         GIT_CREDENTIALS_ID = 'github-personal-access-token' // Jenkins credential ID for Git access
         BRANCH_NAME = 'main' // Branch to checkout
         NOTIFICATION_EMAIL = 'hackermunim@gmail.com' // Comma-separated emails
 //        SLACK_CHANNEL = '#ci-cd-notifications' // Optional Slack channel
+//        SONAR_HOST_URL = '' // SonarQube server URL
+//        SONAR_AUTH_TOKEN = credentials('sonar-auth-token') // Jenkins credential ID for Son
     }
 
     stages {
@@ -75,6 +77,7 @@ pipeline {
             steps {
                 script {
                     sonarSast(
+                            sonarServer: 'SonarQube Server',
                             projectKey: 'landlord-management-api',
                             projectName: 'Landlord Management API'
                     )
