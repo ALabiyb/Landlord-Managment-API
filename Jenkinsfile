@@ -99,5 +99,23 @@ pipeline {
         always {
             dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
         }
+        succees {
+            script {
+                def triggeredBy = detectBuildTrigger()
+                sendCompletionNotification(
+                        recipients: env.NOTIFICATION_EMAIL,
+                        triggeredBy: triggeredBy
+                )
+            }
+        }
+        failure {
+            script {
+                def triggeredBy = detectBuildTrigger()
+                sendFailureNotification(
+                        recipients: env.NOTIFICATION_EMAIL,
+                        triggeredBy: triggeredBy
+                )
+            }
+        }
     }
 }
