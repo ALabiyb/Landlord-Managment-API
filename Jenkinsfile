@@ -79,7 +79,9 @@ pipeline {
                     sonarSast(
                             sonarServer: 'SonarQube Server',
                             projectKey: 'landlord-management-api',
-                            projectName: 'Landlord Management API'
+                            projectName: 'Landlord Management API',
+                            waitForQualityGate: true,
+                            timeoutMinutes: 5
                     )
                 }
             }
