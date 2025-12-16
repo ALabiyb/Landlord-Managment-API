@@ -86,5 +86,13 @@ pipeline {
                 }
             }
         }
+
+        stage('Vulnerability Scan - Docker') {
+            steps {
+                script {
+                    vulnScanDocker() // Uses default commands; can override with params if needed
+                }
+            }
+        }
     }
 }
