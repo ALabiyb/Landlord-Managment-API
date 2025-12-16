@@ -102,7 +102,7 @@ pipeline {
         success {
             script {
                 def triggeredBy = detectBuildTrigger()
-                sendCompletionNotification(
+                sendSuccessNotification(
                         recipients: env.NOTIFICATION_EMAIL,
                         triggeredBy: triggeredBy
                 )
