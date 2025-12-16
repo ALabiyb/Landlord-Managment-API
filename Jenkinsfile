@@ -95,4 +95,9 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            dependencyCheckPublish pattern: 'dependency-check-report.xml'
+        }
+    }
 }
