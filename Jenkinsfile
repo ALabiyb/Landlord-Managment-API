@@ -115,7 +115,9 @@ pipeline {
 
         stage('Build Docker Image and Publish') {
             when {
-                branch env.BRANCH_NAME == 'main'
+                expressions {
+                    env.BRANCH_NAME == 'main'
+                }
             }
             steps {
                 script {
