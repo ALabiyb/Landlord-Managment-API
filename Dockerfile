@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jre-alpine
 
 # === Build-time arguments ===
 ARG GIT_COMMIT=unknown
-ARG GIT_AUTHOR=AUTHOR=unknown
+ARG GIT_AUTHOR=unknown
 ARG BUILD_DATE=unknown
 ARG VERSION=unknown
 ARG APP_TIMEZONE=Africa/Dar_es_Salaam
