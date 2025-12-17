@@ -31,7 +31,6 @@ pipeline {
         GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
         GIT_AUTHOR = sh(script: 'git log -1 --pretty=format:"%an"', returnStdout: true).trim()
         BRANCH_NAME = 'main' // Branch to checkout
-        GIT_BRANCH = env.BRANCH_NAME
         GIT_REPO_URL = 'https://github.com/ALabiyb/Landlord-Managment-API.git'
         GIT_CREDENTIALS_ID = 'github-personal-access-token' // Jenkins credential ID for Git access
 
@@ -116,7 +115,7 @@ pipeline {
 
         stage('Build Docker Image and Publish') {
             when {
-                branch 'main'
+                branch env.BRANCH_NAME == 'main'
             }
             steps {
                 script {
