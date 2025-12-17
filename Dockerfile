@@ -29,6 +29,7 @@ RUN apk add --no-cache tzdata && \
 
 # Labels
 LABEL org.opencontainers.image.title="Landlord Management API" \
+      org.opencontainers.image.description="This API provides endpoints for managing rental properties, landlords, tenants, leases, and payments in Tanzania." \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.authors="${GIT_AUTHOR}" \

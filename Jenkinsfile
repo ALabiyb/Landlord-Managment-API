@@ -20,9 +20,9 @@ pipeline {
         // Project info
         PROJECT_NAME = 'Landlord Management API'
         IMAGE_NAME = 'landlord-management-api'
-        HARBOR_PROJECT = 'library' // Your Harbor project name
-        REGISTRY_URL = 'https://harbor.example.com' // Your Docker registry URL
-        REGISTRY_CREDENTIALS_ID = 'harbor-credentials' // Jenkins credential ID for registry access
+        HARBOR_PROJECT = 'munimdevops' // Your Harbor project name
+        REGISTRY_URL = 'docker.io' // Your Docker registry URL
+        REGISTRY_CREDENTIALS_ID = 'registry-credentials' // Jenkins credential ID for registry access
 
         //Notifications
         NOTIFICATION_EMAIL = 'hackermunim@gmail.com' // Comma-separated emails
