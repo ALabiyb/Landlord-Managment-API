@@ -135,6 +135,16 @@ pipeline {
                 }
             }
         }
+
+        stage('Vulnerability Scan - Application Image') {
+            steps {
+                script {
+                    vulnScanApplicationImage(
+                            imageName: env.FINAL_IMAGE_NAME // Uses the image built in the previous stage
+                    )
+                }
+            }
+        }
     }
     post {
         always {
