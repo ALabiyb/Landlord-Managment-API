@@ -114,11 +114,7 @@ pipeline {
         }
 
         stage('Build Docker Image and Publish') {
-            when {
-                expressions {
-                    env.BRANCH_NAME == 'main'
-                }
-            }
+
             steps {
                 script {
                     def result = buildDockerImageAndPush(
