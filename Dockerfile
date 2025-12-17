@@ -1,8 +1,11 @@
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
 EXPOSE 8080
+USER appuser
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 
