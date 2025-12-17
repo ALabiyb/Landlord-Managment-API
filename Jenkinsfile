@@ -118,8 +118,9 @@ pipeline {
             steps {
                 script {
                     def result = buildDockerImageAndPush(
-                            imageName: "${env.HARBOR_PROJECT}/${env.IMAGE_NAME}",
+                            imageName: env.IMAGE_NAME,
                             imageTag: env.BUILD_NUMBER,
+                            harborProject: env.HARBOR_PROJECT,
                             registryUrl: env.REGISTRY_URL,
                             registryCredentialsId: env.REGISTRY_CREDENTIALS_ID,
                             pushToRegistry: true,
