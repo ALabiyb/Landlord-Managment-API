@@ -131,7 +131,7 @@ pipeline {
                                     APP_TIMEZONE: "Africa/Dar_es_Salaam"   // ← Your desired TZ
                             ]
                     )
-                    env.FINAL_IMAGE_NAME = result.imageName
+                    env.FINAL_IMAGE_NAME = result.localImageName // Save for later stages
                 }
             }
         }
