@@ -16,14 +16,33 @@ pipeline {
 
     environment {
         JAVA_HOME = tool 'jdk21'  // Extra safety
-        BUILD_TOOL = 'maven' // Change to 'npm', 'go', etc. per repo or project
+
+        // Project info
+        PROJECT_NAME = 'Landlord Management API'
+        IMAGE_NAME = 'landlord-management-api'
+        HARBOR_PROJECT = 'library' // Your Harbor project name
+        REGISTRY_URL = 'https://harbor.example.com' // Your Docker registry URL
+        REGISTRY_CREDENTIALS_ID = 'harbor-credentials' // Jenkins credential ID for registry access
+
+        //Notifications
+        NOTIFICATION_EMAIL = 'hackermunim@gmail.com' // Comma-separated emails
+
+        // Git info (automatically set by Jenkins)
+        GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+        GIT_AUTHOR = sh(script: 'git log -1 --pretty=format:"%an"', returnStdout: true).trim()
+        BRANCH_NAME = 'main' // Branch to checkout
+        GIT_BRANCH = env.BRANCH_NAME
         GIT_REPO_URL = 'https://github.com/ALabiyb/Landlord-Managment-API.git'
         GIT_CREDENTIALS_ID = 'github-personal-access-token' // Jenkins credential ID for Git access
-        BRANCH_NAME = 'main' // Branch to checkout
-        NOTIFICATION_EMAIL = 'hackermunim@gmail.com' // Comma-separated emails
-//        SLACK_CHANNEL = '#ci-cd-notifications' // Optional Slack channel
-//        SONAR_HOST_URL = '' // SonarQube server URL
-//        SONAR_AUTH_TOKEN = credentials('sonar-auth-token') // Jenkins credential ID for Son
+
+
+        // Build info
+        BUILD_DATE_UTC = sh(script: "date -u +'%Y-%m-%dT%H:%M:%SZ'", returnStdout: true).trim()
+        APP_VERSION = "1.0.${env.BUILD_NUMBER}"
+        BUILD_TOOL = 'maven' // Change to 'npm', 'go', etc. per repo or project
+
+        // App config
+        APP_TIMEZONE          = 'Africa/Dar_es_Salaam'
     }
 
     stages {
@@ -91,6 +110,31 @@ pipeline {
             steps {
                 script {
                     vulnScanDocker() // Uses default commands; can override with params if needed
+                }
+            }
+        }
+
+        stage('Build Docker Image and Publish') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def result = buildDockerImageAndPush(
+                            imageName: "${env.HARBOR_PROJECT}/${env.IMAGE_NAME}",
+                            imageTag: env.BUILD_NUMBER,
+                            registryUrl: env.REGISTRY_URL,
+                            registryCredentialsId: env.REGISTRY_CREDENTIALS_ID,
+                            pushToRegistry: true,
+                            buildArgs: [
+                                    GIT_AUTHOR : env.GIT_AUTHOR,
+                                    GIT_COMMIT : env.GIT_COMMIT,
+                                    BUILD_DATE : new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')),
+                                    VERSION    : "1.0.${env.BUILD_NUMBER}",
+                                    APP_TIMEZONE: "Africa/Dar_es_Salaam"   // ← Your desired TZ
+                            ]
+                    )
+                    env.FINAL_IMAGE_NAME = result.imageName
                 }
             }
         }

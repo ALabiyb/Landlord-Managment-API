@@ -1,9 +1,42 @@
 FROM eclipse-temurin:21-jre-alpine
+
+# === Build-time arguments ===
+ARG GIT_COMMIT=unknown
+ARG GIT_AUTHOR=AUTHOR=unknown
+ARG BUILD_DATE=unknown
+ARG VERSION=unknown
+ARG APP_TIMEZONE=Africa/Dar_es_Salaam
+
+# === Set timezone ===
+ENV TZ=${APP_TIMEZONE}
+RUN apk add --no-cache tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    apk del tzdata # cleanup to reduce image size
+
+
+# === Metadata Labels ===
+LABEL org.opencontainers.image.title="Rental Management API" \
+      org.opencontainers.image.description="This API provides endpoints for managing rental properties, landlords, tenants, leases, and payments in Tanzania." \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.authors="${GIT_AUTHOR}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.timezone="${APP_TIMEZONE}" \
+
+
 WORKDIR /app
+
+# Create a non-root user to run the application
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
+
+
+# Copy the application JAR file
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
+
+# Expose the application port
 EXPOSE 8080
 USER appuser
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
