@@ -22,9 +22,9 @@ LABEL org.opencontainers.image.title="Rental Management API" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.authors="${GIT_AUTHOR}" \
       org.opencontainers.image.revision="${GIT_COMMIT}" \
-      org.opencontainers.image.timezone="${APP_TIMEZONE}" \
+      org.opencontainers.image.timezone="${APP_TIMEZONE}"
 
-
+# Set working directory
 WORKDIR /app
 
 # Create a non-root user to run the application
