@@ -41,7 +41,8 @@ public class DashboardService {
         long totalProperties = houseRepository.countByLandlordId(landlordId);
         List<Lease> activeLeases = leaseRepository.findByLandlordId(landlordId).stream()
                 .filter(lease -> lease.getStatus() == LeaseStatus.ACTIVE)
-                .collect(Collectors.toList());
+                .toList();
+//                .collect(Collectors.toList());
 
         long occupiedProperties = activeLeases.stream()
                 .map(lease -> lease.getRoomId().value())
