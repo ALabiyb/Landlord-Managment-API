@@ -7,6 +7,8 @@ import com.tz.rental.landlord_management.infrastructure.persistence.repository.j
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +38,11 @@ public class PaymentRepositoryImpl implements PaymentRepository {
         return jpaPaymentRepository.findByLeaseId(leaseId).stream()
                 .map(paymentMapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public BigDecimal sumAmountByLeaseIdInAndPaymentDateBetween(List<UUID> leaseIds, LocalDate start, LocalDate end) {
+        return jpaPaymentRepository.sumAmountByLeaseIdInAndPaymentDateBetween(leaseIds, start, end);
     }
 
     @Override

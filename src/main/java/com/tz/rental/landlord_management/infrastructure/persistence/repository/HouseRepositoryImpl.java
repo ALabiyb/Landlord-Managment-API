@@ -60,6 +60,11 @@ public class HouseRepositoryImpl implements HouseRepository {
     }
 
     @Override
+    public long countByLandlordId(Landlord.LandlordId landlordId) {
+        return houseJpaRepository.countByLandlordId(landlordId.value());
+    }
+
+    @Override
     public List<House> findByStatus(House.HouseStatus status) {
         return houseJpaRepository.findByStatus(status.name())
                 .stream()

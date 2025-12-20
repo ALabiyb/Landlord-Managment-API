@@ -55,6 +55,11 @@ public class LeaseRepositoryImpl implements LeaseRepository {
     }
 
     @Override
+    public long countActiveByLandlordId(Landlord.LandlordId landlordId) {
+        return jpaLeaseRepository.countByLandlordIdAndStatus(landlordId.value(), LeaseStatus.ACTIVE);
+    }
+
+    @Override
     public Optional<Lease> findByRoomIdAndStatus(UUID roomId, String status) {
         return jpaLeaseRepository.findActiveLeaseByRoomId(roomId).map(leaseMapper::toDomain);
     }

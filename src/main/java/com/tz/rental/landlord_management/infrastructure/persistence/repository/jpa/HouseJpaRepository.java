@@ -13,6 +13,7 @@ public interface HouseJpaRepository extends JpaRepository<HouseEntity, UUID> {
     Optional<HouseEntity> findByPropertyCode(String propertyCode);
     boolean existsByPropertyCode(String propertyCode);
     List<HouseEntity> findByLandlordId(UUID landlordId);
+    long countByLandlordId(UUID landlordId); // New method
     List<HouseEntity> findByStatus(String status);
-    List<HouseEntity> findByLandlordIdAndStatus(UUID landlordId, String status); // Changed Landlord.LandlordId to UUID
+    List<HouseEntity> findByLandlordIdAndStatus(UUID landlordId, String status);
 }

@@ -13,7 +13,8 @@ public interface LeaseRepository {
     Optional<Lease> findById(UUID id);
     List<Lease> findAll();
     List<Lease> findByTenantId(UUID tenantId);
-    List<Lease> findByLandlordId(Landlord.LandlordId landlordId); // Added this method
+    List<Lease> findByLandlordId(Landlord.LandlordId landlordId);
+    long countActiveByLandlordId(Landlord.LandlordId landlordId); // New method
     Optional<Lease> findByRoomIdAndStatus(UUID roomId, String status);
     boolean isRoomOccupied(UUID roomId);
     List<Lease> findAllByStatus(LeaseStatus status);

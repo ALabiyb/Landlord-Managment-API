@@ -13,8 +13,9 @@ public interface HouseRepository {
     boolean existsByPropertyCode(String propertyCode);
     List<House> findAll();
     List<House> findByLandlordId(Landlord.LandlordId landlordId);
+    long countByLandlordId(Landlord.LandlordId landlordId); // New method
     List<House> findByStatus(House.HouseStatus status);
-    List<House> findByLandlordIdAndStatus(Landlord.LandlordId landlordId, House.HouseStatus status); // Added method
+    List<House> findByLandlordIdAndStatus(Landlord.LandlordId landlordId, House.HouseStatus status);
     long count();
     void delete(House.HouseId id);
 }
