@@ -42,7 +42,6 @@ public class DashboardService {
         List<Lease> activeLeases = leaseRepository.findByLandlordId(landlordId).stream()
                 .filter(lease -> lease.getStatus() == LeaseStatus.ACTIVE)
                 .toList();
-//                .collect(Collectors.toList());
 
         long occupiedProperties = activeLeases.stream()
                 .map(lease -> lease.getRoomId().value())
