@@ -47,7 +47,8 @@ public class House {
         ACTIVE, INACTIVE, MAINTENANCE, VACANT, OCCUPIED
     }
 
-    private House(HouseId id, String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId, Address address) {
+    // Private constructor to be used by factory methods and builder
+    private House(HouseId id, String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId, Address address, LocalDateTime createdAt) {
         this.id = id;
         this.propertyCode = propertyCode;
         this.name = name;
@@ -56,46 +57,88 @@ public class House {
         this.address = address;
         this.status = HouseStatus.ACTIVE;
         this.imageUrls = new ArrayList<>();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = createdAt;
+        this.updatedAt = createdAt; // Initially same as createdAt
         validate();
     }
 
     // Factory method for creating new houses
     public static House create(String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId, Address address) {
-        return new House(new HouseId(UUID.randomUUID()), propertyCode, name, houseType, landlordId, address);
+        return new House(new HouseId(UUID.randomUUID()), propertyCode, name, houseType, landlordId, address, LocalDateTime.now());
     }
 
-    // Factory method for reconstructing existing houses
+    // Builder for reconstructing existing houses
+    public static class HouseBuilder {
+        private final House house;
+
+        public HouseBuilder(UUID id, String propertyCode, String name, HouseType houseType, UUID landlordId, Address address, LocalDateTime createdAt) {
+            this.house = new House(new HouseId(id), propertyCode, name, houseType, new Landlord.LandlordId(landlordId), address, createdAt);
+        }
+
+        public HouseBuilder description(String description) {
+            house.description = description;
+            return this;
+        }
+
+        public HouseBuilder totalFloors(Integer totalFloors) {
+            house.totalFloors = totalFloors;
+            return this;
+        }
+
+        public HouseBuilder yearBuilt(Integer yearBuilt) {
+            house.yearBuilt = yearBuilt;
+            return this;
+        }
+
+        public HouseBuilder amenities(Boolean hasParking, Boolean hasSecurity, Boolean hasWater, Boolean hasElectricity) {
+            house.hasParking = hasParking;
+            house.hasSecurity = hasSecurity;
+            house.hasWater = hasWater;
+            house.hasElectricity = hasElectricity;
+            return this;
+        }
+
+        public HouseBuilder imageUrls(List<String> imageUrls) {
+            house.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
+            return this;
+        }
+
+        public HouseBuilder monthlyCommonCharges(BigDecimal monthlyCommonCharges) {
+            house.monthlyCommonCharges = monthlyCommonCharges;
+            return this;
+        }
+
+        public HouseBuilder status(HouseStatus status) {
+            house.status = status;
+            return this;
+        }
+
+        public HouseBuilder updatedAt(LocalDateTime updatedAt) {
+            house.updatedAt = updatedAt;
+            return this;
+        }
+
+        public House build() {
+            return house;
+        }
+    }
+
+    // Refactored factory method using the builder
     public static House fromExisting(UUID id, String propertyCode, String name, String description, HouseType houseType,
                                      UUID landlordId, Address address, Integer totalFloors, Integer yearBuilt,
                                      Boolean hasParking, Boolean hasSecurity, Boolean hasWater, Boolean hasElectricity,
                                      List<String> imageUrls, BigDecimal monthlyCommonCharges, HouseStatus status,
                                      LocalDateTime createdAt, LocalDateTime updatedAt) {
-        House house = new House(new HouseId(id), propertyCode, name, houseType, new Landlord.LandlordId(landlordId), address);
-        house.description = description;
-        house.totalFloors = totalFloors;
-        house.yearBuilt = yearBuilt;
-        house.hasParking = hasParking;
-        house.hasSecurity = hasSecurity;
-        house.hasWater = hasWater;
-        house.hasElectricity = hasElectricity;
-        house.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
-        house.monthlyCommonCharges = monthlyCommonCharges;
-        house.status = status;
-        // Override timestamps
-        try {
-            java.lang.reflect.Field createdAtField = House.class.getDeclaredField("createdAt");
-            createdAtField.setAccessible(true);
-            createdAtField.set(house, createdAt);
-
-            java.lang.reflect.Field updatedAtField = House.class.getDeclaredField("updatedAt");
-            updatedAtField.setAccessible(true);
-            updatedAtField.set(house, updatedAt);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to set timestamps", e);
-        }
-        return house;
+        return new HouseBuilder(id, propertyCode, name, houseType, landlordId, address, createdAt)
+                .description(description)
+                .totalFloors(totalFloors)
+                .yearBuilt(yearBuilt)
+                .amenities(hasParking, hasSecurity, hasWater, hasElectricity)
+                .imageUrls(imageUrls)
+                .monthlyCommonCharges(monthlyCommonCharges)
+                .status(status)
+                .updatedAt(updatedAt)
+                .build();
     }
 
     public void updateInformation(String name, String description, HouseType houseType) {

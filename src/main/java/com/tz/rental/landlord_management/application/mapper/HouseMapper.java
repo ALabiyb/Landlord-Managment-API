@@ -2,14 +2,13 @@ package com.tz.rental.landlord_management.application.mapper;
 
 import com.tz.rental.landlord_management.application.dto.HouseResponse;
 import com.tz.rental.landlord_management.domain.model.aggregate.House;
-import com.tz.rental.landlord_management.domain.model.aggregate.Landlord;
 import com.tz.rental.landlord_management.domain.model.valueobject.HouseType;
 import org.springframework.stereotype.Component;
 
 @Component("applicationHouseMapper")
 public class HouseMapper {
 
-    public HouseResponse toResponse(House house, Landlord landlord) {
+    public HouseResponse toResponse(House house) {
         HouseResponse.HouseResponseBuilder builder = HouseResponse.builder()
                 .id(house.getId().value())
                 .propertyCode(house.getPropertyCode())

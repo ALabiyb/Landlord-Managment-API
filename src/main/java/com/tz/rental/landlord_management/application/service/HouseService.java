@@ -26,7 +26,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -109,7 +108,7 @@ public class HouseService {
 
         List<HouseResponse> houseResponses = housePage.getContent().stream()
                 .map(house -> mapEntityToResponse(house, false))
-                .collect(Collectors.toList());
+                .toList();
 
         return PaginatedResponse.<List<HouseResponse>>builder()
                 .data(houseResponses)

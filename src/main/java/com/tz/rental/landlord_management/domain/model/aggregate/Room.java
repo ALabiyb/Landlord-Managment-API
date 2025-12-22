@@ -58,21 +58,35 @@ public class Room {
         );
     }
 
-    // Factory method for existing rooms (from database)
+    // Builder for reconstructing existing rooms
+    public static class RoomBuilder {
+        private final Room room;
+
+        public RoomBuilder(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            this.room = new Room(new RoomId(id), new House.HouseId(houseId), roomNumber, monthlyRent, description, status, createdAt, updatedAt);
+        }
+
+        public RoomBuilder size(String size) {
+            room.size = size;
+            return this;
+        }
+
+        public RoomBuilder imageUrls(List<String> imageUrls) {
+            room.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
+            return this;
+        }
+
+        public Room build() {
+            return room;
+        }
+    }
+
+    // Refactored factory method using the builder
     public static Room fromExisting(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, String size, List<String> imageUrls, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        Room room = new Room(
-                new RoomId(id),
-                new House.HouseId(houseId),
-                roomNumber,
-                monthlyRent,
-                description,
-                status,
-                createdAt,
-                updatedAt
-        );
-        room.size = size;
-        room.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
-        return room;
+        return new RoomBuilder(id, houseId, roomNumber, monthlyRent, description, status, createdAt, updatedAt)
+                .size(size)
+                .imageUrls(imageUrls)
+                .build();
     }
 
     public void updateDetails(String roomNumber, BigDecimal monthlyRent, String description, String size) {
