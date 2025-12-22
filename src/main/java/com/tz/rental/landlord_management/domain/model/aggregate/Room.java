@@ -62,8 +62,34 @@ public class Room {
     public static class RoomBuilder {
         private final Room room;
 
-        public RoomBuilder(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-            this.room = new Room(new RoomId(id), new House.HouseId(houseId), roomNumber, monthlyRent, description, status, createdAt, updatedAt);
+        public RoomBuilder(UUID id, UUID houseId, LocalDateTime createdAt) {
+            // A minimal constructor for the builder
+            this.room = new Room(new RoomId(id), new House.HouseId(houseId), null, null, null, null, createdAt, createdAt);
+        }
+
+        public RoomBuilder roomNumber(String roomNumber) {
+            room.roomNumber = roomNumber;
+            return this;
+        }
+
+        public RoomBuilder monthlyRent(BigDecimal monthlyRent) {
+            room.monthlyRent = monthlyRent;
+            return this;
+        }
+
+        public RoomBuilder description(String description) {
+            room.description = description;
+            return this;
+        }
+
+        public RoomBuilder status(RoomStatus status) {
+            room.status = status;
+            return this;
+        }
+
+        public RoomBuilder updatedAt(LocalDateTime updatedAt) {
+            room.updatedAt = updatedAt;
+            return this;
         }
 
         public RoomBuilder size(String size) {
@@ -77,13 +103,19 @@ public class Room {
         }
 
         public Room build() {
+            room.validate(); // Validate the fully constructed object
             return room;
         }
     }
 
     // Refactored factory method using the builder
     public static Room fromExisting(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, String size, List<String> imageUrls, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new RoomBuilder(id, houseId, roomNumber, monthlyRent, description, status, createdAt, updatedAt)
+        return new RoomBuilder(id, houseId, createdAt)
+                .roomNumber(roomNumber)
+                .monthlyRent(monthlyRent)
+                .description(description)
+                .status(status)
+                .updatedAt(updatedAt)
                 .size(size)
                 .imageUrls(imageUrls)
                 .build();

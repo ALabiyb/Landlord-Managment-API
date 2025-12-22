@@ -48,35 +48,56 @@ public class House {
     }
 
     // Private constructor to be used by factory methods and builder
-    private House(HouseId id, String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId, Address address, LocalDateTime createdAt) {
+    private House(HouseId id, Landlord.LandlordId landlordId, LocalDateTime createdAt) {
         this.id = id;
-        this.propertyCode = propertyCode;
-        this.name = name;
-        this.houseType = houseType;
         this.landlordId = landlordId;
-        this.address = address;
-        this.status = HouseStatus.ACTIVE;
-        this.imageUrls = new ArrayList<>();
         this.createdAt = createdAt;
         this.updatedAt = createdAt; // Initially same as createdAt
-        validate();
+        this.imageUrls = new ArrayList<>();
+        this.status = HouseStatus.ACTIVE;
     }
 
     // Factory method for creating new houses
     public static House create(String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId, Address address) {
-        return new House(new HouseId(UUID.randomUUID()), propertyCode, name, houseType, landlordId, address, LocalDateTime.now());
+        House house = new House(new HouseId(UUID.randomUUID()), landlordId, LocalDateTime.now());
+        house.propertyCode = propertyCode;
+        house.name = name;
+        house.houseType = houseType;
+        house.address = address;
+        house.validate();
+        return house;
     }
 
     // Builder for reconstructing existing houses
     public static class HouseBuilder {
         private final House house;
 
-        public HouseBuilder(UUID id, String propertyCode, String name, HouseType houseType, UUID landlordId, Address address, LocalDateTime createdAt) {
-            this.house = new House(new HouseId(id), propertyCode, name, houseType, new Landlord.LandlordId(landlordId), address, createdAt);
+        public HouseBuilder(UUID id, UUID landlordId, LocalDateTime createdAt) {
+            this.house = new House(new HouseId(id), new Landlord.LandlordId(landlordId), createdAt);
+        }
+
+        public HouseBuilder propertyCode(String propertyCode) {
+            house.propertyCode = propertyCode;
+            return this;
+        }
+
+        public HouseBuilder name(String name) {
+            house.name = name;
+            return this;
         }
 
         public HouseBuilder description(String description) {
             house.description = description;
+            return this;
+        }
+
+        public HouseBuilder houseType(HouseType houseType) {
+            house.houseType = houseType;
+            return this;
+        }
+
+        public HouseBuilder address(Address address) {
+            house.address = address;
             return this;
         }
 
@@ -119,6 +140,7 @@ public class House {
         }
 
         public House build() {
+            house.validate();
             return house;
         }
     }
@@ -129,8 +151,12 @@ public class House {
                                      Boolean hasParking, Boolean hasSecurity, Boolean hasWater, Boolean hasElectricity,
                                      List<String> imageUrls, BigDecimal monthlyCommonCharges, HouseStatus status,
                                      LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new HouseBuilder(id, propertyCode, name, houseType, landlordId, address, createdAt)
+        return new HouseBuilder(id, landlordId, createdAt)
+                .propertyCode(propertyCode)
+                .name(name)
                 .description(description)
+                .houseType(houseType)
+                .address(address)
                 .totalFloors(totalFloors)
                 .yearBuilt(yearBuilt)
                 .amenities(hasParking, hasSecurity, hasWater, hasElectricity)
