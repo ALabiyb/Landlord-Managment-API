@@ -108,19 +108,6 @@ public class Room {
         }
     }
 
-    // Refactored factory method using the builder
-    public static Room fromExisting(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, String size, List<String> imageUrls, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new RoomBuilder(id, houseId, createdAt)
-                .roomNumber(roomNumber)
-                .monthlyRent(monthlyRent)
-                .description(description)
-                .status(status)
-                .updatedAt(updatedAt)
-                .size(size)
-                .imageUrls(imageUrls)
-                .build();
-    }
-
     public void updateDetails(String roomNumber, BigDecimal monthlyRent, String description, String size) {
         this.roomNumber = roomNumber;
         this.monthlyRent = monthlyRent;
