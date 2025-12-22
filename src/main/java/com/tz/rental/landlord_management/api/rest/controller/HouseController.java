@@ -61,7 +61,7 @@ public class HouseController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = StandardErrorResponse.class)))
     })
-    public ResponseEntity<ApiResponse<HouseResponse>> getHouseById(@PathVariable UUID id, @RequestParam(required = false) boolean includeRooms) {
+    public ResponseEntity<ApiResponse<HouseResponse>> getHouseById(@PathVariable UUID id, @RequestParam(required = false) Boolean includeRooms) {
         HouseResponse response = houseService.getHouseById(id, includeRooms);
         return ResponseEntity.ok(ApiResponse.success("House retrieved successfully", response));
     }

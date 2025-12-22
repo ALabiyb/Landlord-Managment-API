@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoomService {
 
+    private static final String ROOM_NOT_FOUND_MSG = "Room not found with ID: ";
     private final JpaRoomRepository roomRepository;
     private final JpaHouseRepository houseRepository;
 
@@ -45,7 +46,7 @@ public class RoomService {
     @Transactional(readOnly = true)
     public RoomResponse getRoomById(UUID id) {
         RoomEntity roomEntity = roomRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Room not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
         return mapEntityToResponse(roomEntity);
     }
 
@@ -69,7 +70,7 @@ public class RoomService {
     @Transactional
     public RoomResponse updateRoom(UUID id, CreateRoomRequest request) {
         RoomEntity roomEntity = roomRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Room not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
 
         mapRequestToEntity(request, roomEntity);
         RoomEntity updatedRoom = roomRepository.save(roomEntity);
@@ -79,7 +80,7 @@ public class RoomService {
     @Transactional
     public RoomResponse updateRoomStatus(UUID id, UpdateRoomStatusRequest request) {
         RoomEntity roomEntity = roomRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Room not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
 
         roomEntity.setStatus(request.getStatus());
         RoomEntity updatedRoom = roomRepository.save(roomEntity);
@@ -89,7 +90,7 @@ public class RoomService {
     @Transactional
     public void deleteRoom(UUID id) {
         RoomEntity roomEntity = roomRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Room not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
         roomRepository.delete(roomEntity);
     }
 

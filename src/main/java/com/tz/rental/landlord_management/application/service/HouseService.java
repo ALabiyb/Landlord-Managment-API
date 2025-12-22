@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HouseService {
 
+    private static final String HOUSE_FIELD = "house";
+    private static final String HOUSE_NOT_FOUND_MSG = "House not found with ID: ";
     private final JpaHouseRepository houseRepository;
     private final JpaLandlordRepository landlordRepository;
 
@@ -54,10 +56,10 @@ public class HouseService {
     }
 
     @Transactional(readOnly = true)
-    public HouseResponse getHouseById(UUID id, boolean includeRooms) {
+    public HouseResponse getHouseById(UUID id, Boolean includeRooms) {
         HouseEntity houseEntity = houseRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("House not found with ID: " + id));
-        return mapEntityToResponse(houseEntity, includeRooms);
+                .orElseThrow(() -> new NotFoundException(HOUSE_NOT_FOUND_MSG + id));
+        return mapEntityToResponse(houseEntity, includeRooms != null && includeRooms);
     }
 
     @Transactional(readOnly = true)
@@ -75,7 +77,7 @@ public class HouseService {
                     Root<RoomEntity> subRoot = subquery.from(RoomEntity.class);
                     subquery.select(subRoot);
                     subquery.where(
-                            cb.equal(subRoot.get("house"), root), // Correlated subquery
+                            cb.equal(subRoot.get(HOUSE_FIELD), root), // Correlated subquery
                             cb.equal(subRoot.get("status"), RoomStatus.VACANT)
                     );
                     predicates.add(cb.exists(subquery));
@@ -86,7 +88,7 @@ public class HouseService {
                     Subquery<Long> countSubquery = query.subquery(Long.class);
                     Root<RoomEntity> countSubRoot = countSubquery.from(RoomEntity.class);
                     countSubquery.select(cb.count(countSubRoot));
-                    countSubquery.where(cb.equal(countSubRoot.get("house"), root));
+                    countSubquery.where(cb.equal(countSubRoot.get(HOUSE_FIELD), root));
                     predicates.add(cb.greaterThan(countSubquery, 0L));
 
                     // 2. No room exists with a status other than OCCUPIED
@@ -94,7 +96,7 @@ public class HouseService {
                     Root<RoomEntity> subRoot = subquery.from(RoomEntity.class);
                     subquery.select(subRoot);
                     subquery.where(
-                            cb.equal(subRoot.get("house"), root), // Correlated subquery
+                            cb.equal(subRoot.get(HOUSE_FIELD), root), // Correlated subquery
                             cb.notEqual(subRoot.get("status"), RoomStatus.OCCUPIED)
                     );
                     predicates.add(cb.not(cb.exists(subquery)));
@@ -123,7 +125,7 @@ public class HouseService {
     @Transactional
     public HouseResponse updateHouse(UUID id, CreateHouseRequest request) {
         HouseEntity houseEntity = houseRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("House not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException(HOUSE_NOT_FOUND_MSG + id));
 
         // Check for property code uniqueness if it's being changed
         if (!houseEntity.getPropertyCode().equals(request.getPropertyCode())) {
@@ -140,7 +142,7 @@ public class HouseService {
     @Transactional
     public void deleteHouse(UUID id) {
         HouseEntity houseEntity = houseRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("House not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException(HOUSE_NOT_FOUND_MSG + id));
         houseRepository.delete(houseEntity);
     }
 

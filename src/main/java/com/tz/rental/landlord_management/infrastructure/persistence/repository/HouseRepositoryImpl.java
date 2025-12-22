@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HouseRepositoryImpl implements HouseRepository {
 
+    private static final String HOUSE_FIELD = "house";
     private final JpaHouseRepository houseRepository;
     private final HouseDomainMapper houseDomainMapper;
 
@@ -114,7 +115,7 @@ public class HouseRepositoryImpl implements HouseRepository {
                 Root<RoomEntity> subRoot = subquery.from(RoomEntity.class);
                 subquery.select(subRoot);
                 subquery.where(
-                        cb.equal(subRoot.get("house"), root),
+                        cb.equal(subRoot.get(HOUSE_FIELD), root),
                         cb.equal(subRoot.get("status"), RoomStatus.VACANT)
                 );
                 predicates.add(cb.exists(subquery));
@@ -124,14 +125,14 @@ public class HouseRepositoryImpl implements HouseRepository {
                 Subquery<Long> countSubquery = query.subquery(Long.class);
                 Root<RoomEntity> countSubRoot = countSubquery.from(RoomEntity.class);
                 countSubquery.select(cb.count(countSubRoot));
-                countSubquery.where(cb.equal(countSubRoot.get("house"), root));
+                countSubquery.where(cb.equal(countSubRoot.get(HOUSE_FIELD), root));
                 predicates.add(cb.greaterThan(countSubquery, 0L));
 
                 Subquery<RoomEntity> subquery = query.subquery(RoomEntity.class);
                 Root<RoomEntity> subRoot = subquery.from(RoomEntity.class);
                 subquery.select(subRoot);
                 subquery.where(
-                        cb.equal(subRoot.get("house"), root),
+                        cb.equal(subRoot.get(HOUSE_FIELD), root),
                         cb.notEqual(subRoot.get("status"), RoomStatus.OCCUPIED)
                 );
                 predicates.add(cb.not(cb.exists(subquery)));
