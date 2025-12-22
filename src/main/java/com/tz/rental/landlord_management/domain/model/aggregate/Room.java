@@ -5,6 +5,8 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -16,6 +18,8 @@ public class Room {
     private String description;
     private BigDecimal monthlyRent;
     private RoomStatus status;
+    private String size;
+    private List<String> imageUrls;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -34,6 +38,7 @@ public class Room {
         this.monthlyRent = monthlyRent;
         this.description = description;
         this.status = status;
+        this.imageUrls = new ArrayList<>();
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         validate();
@@ -54,8 +59,8 @@ public class Room {
     }
 
     // Factory method for existing rooms (from database)
-    public static Room fromExisting(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new Room(
+    public static Room fromExisting(UUID id, UUID houseId, String roomNumber, BigDecimal monthlyRent, String description, RoomStatus status, String size, List<String> imageUrls, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        Room room = new Room(
                 new RoomId(id),
                 new House.HouseId(houseId),
                 roomNumber,
@@ -65,14 +70,26 @@ public class Room {
                 createdAt,
                 updatedAt
         );
+        room.size = size;
+        room.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
+        return room;
     }
 
-    public void updateDetails(String roomNumber, BigDecimal monthlyRent, String description) {
+    public void updateDetails(String roomNumber, BigDecimal monthlyRent, String description, String size) {
         this.roomNumber = roomNumber;
         this.monthlyRent = monthlyRent;
         this.description = description;
+        this.size = size;
         this.updatedAt = LocalDateTime.now();
         validate();
+    }
+
+    public void addImageUrl(String url) {
+        if (this.imageUrls == null) {
+            this.imageUrls = new ArrayList<>();
+        }
+        this.imageUrls.add(url);
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void changeStatus(RoomStatus newStatus) {

@@ -3,35 +3,37 @@ package com.tz.rental.landlord_management.application.mapper;
 import com.tz.rental.landlord_management.application.dto.HouseResponse;
 import com.tz.rental.landlord_management.domain.model.aggregate.House;
 import com.tz.rental.landlord_management.domain.model.aggregate.Landlord;
+import com.tz.rental.landlord_management.domain.model.valueobject.HouseType;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("applicationHouseMapper")
 public class HouseMapper {
 
     public HouseResponse toResponse(House house, Landlord landlord) {
-        HouseResponse response = new HouseResponse();
-        response.setId(house.getId().value());
-        response.setPropertyCode(house.getPropertyCode());
-        response.setName(house.getName());
-        response.setDescription(house.getDescription());
-        response.setHouseType(house.getHouseType().name());
+        HouseResponse.HouseResponseBuilder builder = HouseResponse.builder()
+                .id(house.getId().value())
+                .propertyCode(house.getPropertyCode())
+                .name(house.getName())
+                .description(house.getDescription())
+                .houseType(HouseType.valueOf(house.getHouseType().name()))
+                .totalFloors(house.getTotalFloors())
+                .yearBuilt(house.getYearBuilt())
+                .hasParking(house.getHasParking())
+                .hasSecurity(house.getHasSecurity())
+                .hasWater(house.getHasWater())
+                .hasElectricity(house.getHasElectricity())
+                .imageUrls(house.getImageUrls())
+                .monthlyCommonCharges(house.getMonthlyCommonCharges())
+                .createdAt(house.getCreatedAt())
+                .updatedAt(house.getUpdatedAt());
 
-        if (landlord != null) {
-            response.setLandlordId(landlord.getId().value());
-            response.setLandlordName(landlord.getFullName());
+        if (house.getAddress() != null) {
+            builder.streetAddress(house.getAddress().getStreetAddress())
+                   .district(house.getAddress().getDistrict())
+                   .region(house.getAddress().getRegion())
+                   .country(house.getAddress().getCountry());
         }
 
-        response.setStreetAddress(house.getAddress().getStreetAddress());
-        response.setDistrict(house.getAddress().getDistrict());
-        response.setRegion(house.getAddress().getRegion());
-        response.setCountry(house.getAddress().getCountry());
-        response.setTotalFloors(house.getTotalFloors());
-        response.setYearBuilt(house.getYearBuilt());
-        response.setHasParking(house.getHasParking());
-        response.setHasSecurity(house.getHasSecurity());
-        response.setMonthlyCommonCharges(house.getMonthlyCommonCharges().getAmount());
-        response.setStatus(house.getStatus().name());
-
-        return response;
+        return builder.build();
     }
 }

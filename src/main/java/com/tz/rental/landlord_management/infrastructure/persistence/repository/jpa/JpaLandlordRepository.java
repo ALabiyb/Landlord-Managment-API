@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface JpaLandlordRepository extends JpaRepository<LandlordEntity, UUID> {
     Optional<LandlordEntity> findByEmail(String email);
     Optional<LandlordEntity> findByPhoneNumber(String phoneNumber);
+    Optional<LandlordEntity> findByUserUsername(String username);
 }

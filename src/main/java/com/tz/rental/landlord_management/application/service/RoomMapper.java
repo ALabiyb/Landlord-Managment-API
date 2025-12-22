@@ -15,6 +15,8 @@ public class RoomMapper {
         response.setDescription(room.getDescription());
         response.setMonthlyRent(room.getMonthlyRent());
         response.setStatus(room.getStatus());
+        response.setSize(room.getSize());
+        response.setImageUrls(room.getImageUrls());
         response.setCreatedAt(room.getCreatedAt());
         response.setUpdatedAt(room.getUpdatedAt());
         return response;

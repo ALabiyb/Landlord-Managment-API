@@ -1,49 +1,57 @@
 package com.tz.rental.landlord_management.application.dto;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.tz.rental.landlord_management.domain.model.valueobject.HouseType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-@Schema(description = "Request to create a new house")
 public class CreateHouseRequest {
 
-    @NotBlank(message = "Property code is required")
-    @Schema(description = "Unique code for the property", example = "PROP001")
+    @NotBlank
+    @Size(max = 50)
     private String propertyCode;
 
-    @NotBlank(message = "House name is required")
-    @Schema(description = "Name of the house", example = "Kigamboni House")
+    @NotBlank
+    @Size(max = 100)
     private String name;
 
-    @Schema(description = "Detailed description of the house", example = "A beautiful house near the beach")
     private String description;
 
-    @NotBlank(message = "House type is required")
-    @Schema(description = "Type of house (e.g., APARTMENT, STANDALONE, COMPLEX)", example = "STANDALONE")
-    private String houseType; // APARTMENT, STANDALONE, COMPLEX
+    @NotNull
+    private HouseType houseType;
 
-    @NotBlank(message = "Street address is required")
-    @Schema(description = "Street address of the house", example = "123 Main Street")
+    @Size(max = 255)
     private String streetAddress;
 
-    @NotBlank(message = "District is required")
-    @Schema(description = "District where the house is located", example = "Kigamboni")
+    @NotBlank
+    @Size(max = 100)
     private String district;
 
-    @NotBlank(message = "Region is required")
-    @Schema(description = "Region where the house is located", example = "Dar es Salaam")
+    @NotBlank
+    @Size(max = 100)
     private String region;
 
-    @Schema(description = "Country where the house is located", example = "Tanzania")
-    private String country = "Tanzania";
+    @NotBlank
+    @Size(max = 100)
+    private String country;
 
-    private Integer totalFloors = 1;
+    @Positive
+    private Integer totalFloors;
+
     private Integer yearBuilt;
+
     private Boolean hasParking = false;
     private Boolean hasSecurity = false;
-    private BigDecimal monthlyCommonCharges = BigDecimal.ZERO;
+    private Boolean hasWater = false;
+    private Boolean hasElectricity = false;
+
+    private List<String> imageUrls;
+
+    private BigDecimal monthlyCommonCharges;
 }

@@ -15,9 +15,9 @@ public class HouseDomainMapper {
         entity.setPropertyCode(house.getPropertyCode());
         entity.setName(house.getName());
         entity.setDescription(house.getDescription());
-        entity.setHouseType(house.getHouseType().name());
+        // Map domain HouseType to entity HouseType
+        entity.setHouseType(com.tz.rental.landlord_management.domain.model.valueobject.HouseType.valueOf(house.getHouseType().name()));
 
-        // Set landlord (just ID for now)
         LandlordEntity landlord = new LandlordEntity();
         landlord.setId(house.getLandlordId().value());
         entity.setLandlord(landlord);
@@ -30,14 +30,16 @@ public class HouseDomainMapper {
         entity.setYearBuilt(house.getYearBuilt());
         entity.setHasParking(house.getHasParking());
         entity.setHasSecurity(house.getHasSecurity());
-        entity.setMonthlyCommonCharges(house.getMonthlyCommonCharges().getAmount());
-        entity.setStatus(house.getStatus().name());
+        entity.setHasWater(house.getHasWater());
+        entity.setHasElectricity(house.getHasElectricity());
+        entity.setImageUrls(house.getImageUrls());
+        entity.setMonthlyCommonCharges(house.getMonthlyCommonCharges());
+        // Status is no longer stored in HouseEntity, it's derived
 
         return entity;
     }
 
     public House toDomain(HouseEntity entity) {
-        // Create Address value object - FIX: Correct constructor call
         Address address = new Address(
                 entity.getStreetAddress(),
                 null, // ward is not stored in HouseEntity directly
@@ -47,11 +49,11 @@ public class HouseDomainMapper {
                 null // postalCode is not stored in HouseEntity directly
         );
 
-        // Convert house type
-        House.HouseType houseType = House.HouseType.valueOf(entity.getHouseType());
-
-        // Convert status
-        House.HouseStatus status = House.HouseStatus.valueOf(entity.getStatus());
+        House.HouseType houseType = House.HouseType.valueOf(entity.getHouseType().name());
+        
+        // Defaulting to VACANT as status is not stored in entity anymore
+        // In a real scenario, we might want to calculate this or fetch it separately
+        House.HouseStatus status = House.HouseStatus.VACANT; 
 
         return House.fromExisting(
                 entity.getId(),
@@ -65,6 +67,9 @@ public class HouseDomainMapper {
                 entity.getYearBuilt(),
                 entity.getHasParking(),
                 entity.getHasSecurity(),
+                entity.getHasWater(),
+                entity.getHasElectricity(),
+                entity.getImageUrls(),
                 entity.getMonthlyCommonCharges(),
                 status,
                 entity.getCreatedAt(),

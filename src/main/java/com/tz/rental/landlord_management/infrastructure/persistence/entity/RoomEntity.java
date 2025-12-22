@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,6 +37,14 @@ public class RoomEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RoomStatus status;
+
+    @Column(name = "size")
+    private String size; // e.g., "15x15", "20 sqm"
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "room_image_urls", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tz.rental.landlord_management.api.rest.dto.ApiResponse;
 import com.tz.rental.landlord_management.application.dto.*;
+import com.tz.rental.landlord_management.domain.model.valueobject.HouseType;
 import com.tz.rental.landlord_management.domain.model.valueobject.PaymentPeriod;
 import com.tz.rental.landlord_management.domain.model.valueobject.RoomStatus;
 import org.junit.jupiter.api.BeforeAll;
@@ -96,7 +97,7 @@ public class FullSystemE2ETest {
         houseRequest.setPropertyCode("TEST-HOUSE-" + uniqueId);
         houseRequest.setName("Test House");
         houseRequest.setDescription("A house for E2E testing.");
-        houseRequest.setHouseType("STANDALONE");
+        houseRequest.setHouseType(HouseType.STANDALONE);
         // landlordId is now removed from the request
         houseRequest.setStreetAddress("123 Test Street");
         houseRequest.setDistrict("Test District");

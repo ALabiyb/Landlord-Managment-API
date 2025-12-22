@@ -2,248 +2,214 @@ package com.tz.rental.landlord_management.application.service;
 
 import com.tz.rental.landlord_management.application.dto.CreateHouseRequest;
 import com.tz.rental.landlord_management.application.dto.HouseResponse;
-import com.tz.rental.landlord_management.application.mapper.HouseMapper;
+import com.tz.rental.landlord_management.application.dto.PaginatedResponse;
 import com.tz.rental.landlord_management.domain.exception.AlreadyExistsException;
 import com.tz.rental.landlord_management.domain.exception.NotFoundException;
-import com.tz.rental.landlord_management.domain.exception.UnauthorizedException;
-import com.tz.rental.landlord_management.domain.model.aggregate.House;
-import com.tz.rental.landlord_management.domain.model.aggregate.Landlord;
-import com.tz.rental.landlord_management.domain.model.valueobject.Address;
-import com.tz.rental.landlord_management.domain.repository.HouseRepository;
-import com.tz.rental.landlord_management.domain.repository.LandlordRepository;
-import com.tz.rental.landlord_management.infrastructure.persistence.entity.UserEntity;
+import com.tz.rental.landlord_management.domain.model.valueobject.RoomStatus;
+import com.tz.rental.landlord_management.infrastructure.persistence.entity.HouseEntity;
+import com.tz.rental.landlord_management.infrastructure.persistence.entity.LandlordEntity;
+import com.tz.rental.landlord_management.infrastructure.persistence.entity.RoomEntity;
+import com.tz.rental.landlord_management.infrastructure.persistence.repository.jpa.JpaHouseRepository;
+import com.tz.rental.landlord_management.infrastructure.persistence.repository.jpa.JpaLandlordRepository;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HouseService {
 
-    private final HouseRepository houseRepository;
-    private final LandlordRepository landlordRepository;
-    private final HouseMapper houseMapper;
-
-    private Landlord.LandlordId getCurrentLandlordId() {
-        UserEntity currentUser = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (currentUser.getLandlord() == null) {
-            throw new IllegalStateException("The current user is not a landlord.");
-        }
-        return new Landlord.LandlordId(currentUser.getLandlord().getId());
-    }
+    private final JpaHouseRepository houseRepository;
+    private final JpaLandlordRepository landlordRepository;
 
     @Transactional
     public HouseResponse createHouse(CreateHouseRequest request) {
-        log.info("Creating house: {}", request.getName());
-        Landlord.LandlordId landlordIdVO = getCurrentLandlordId();
+        houseRepository.findByPropertyCode(request.getPropertyCode()).ifPresent(h -> {
+            throw new AlreadyExistsException("House with property code " + request.getPropertyCode() + " already exists.");
+        });
 
-        // Check if property code already exists for this landlord
-        // Note: This check might need to be adjusted if property codes should be globally unique
-        if (houseRepository.existsByPropertyCode(request.getPropertyCode())) {
-            throw new AlreadyExistsException("House", "propertyCode=" + request.getPropertyCode());
-        }
+        LandlordEntity landlord = getCurrentLandlord();
 
-        Landlord landlord = landlordRepository.findById(landlordIdVO)
-                .orElseThrow(() -> new NotFoundException("Landlord", landlordIdVO.value().toString()));
+        HouseEntity houseEntity = new HouseEntity();
+        houseEntity.setId(UUID.randomUUID());
+        houseEntity.setLandlord(landlord);
+        // Map request to entity
+        mapRequestToEntity(request, houseEntity);
 
-        Address address = new Address(
-                request.getStreetAddress(),
-                null,
-                request.getDistrict(),
-                request.getRegion(),
-                request.getCountry(),
-                null
-        );
-
-        House.HouseType houseType = House.HouseType.valueOf(request.getHouseType().toUpperCase());
-
-        House house = House.create(
-                request.getPropertyCode(),
-                request.getName(),
-                houseType,
-                landlordIdVO,
-                address
-        );
-
-        house.updateInformation(request.getName(), request.getDescription(), houseType);
-        house.updateAmenities(request.getTotalFloors(), request.getYearBuilt(), request.getHasParking(), request.getHasSecurity());
-        if (request.getMonthlyCommonCharges() != null && request.getMonthlyCommonCharges().compareTo(BigDecimal.ZERO) > 0) {
-            house.updateCharges(request.getMonthlyCommonCharges());
-        }
-
-        House savedHouse = houseRepository.save(house);
-        log.info("Created house with ID: {} for Landlord ID: {}", savedHouse.getId().value(), landlordIdVO.value());
-
-        return houseMapper.toResponse(savedHouse, landlord);
+        HouseEntity savedHouse = houseRepository.save(houseEntity);
+        return mapEntityToResponse(savedHouse, false);
     }
 
-    public HouseResponse getHouse(UUID id) {
-        log.info("Getting house by ID: {}", id);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
-
-        House.HouseId houseId = new House.HouseId(id);
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new NotFoundException("House", id));
-
-        if (!house.getLandlordId().equals(currentLandlordId)) {
-            throw new UnauthorizedException("You are not authorized to view this house.");
-        }
-
-        Landlord landlord = landlordRepository.findById(house.getLandlordId())
-                .orElseThrow(() -> new NotFoundException("Landlord", house.getLandlordId().value()));
-
-        return houseMapper.toResponse(house, landlord);
+    @Transactional(readOnly = true)
+    public HouseResponse getHouseById(UUID id, boolean includeRooms) {
+        HouseEntity houseEntity = houseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("House not found with ID: " + id));
+        return mapEntityToResponse(houseEntity, includeRooms);
     }
 
-    public List<HouseResponse> getAllHouses() {
-        log.info("Getting all houses for current landlord");
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
+    @Transactional(readOnly = true)
+    public PaginatedResponse<List<HouseResponse>> getAllHouses(Pageable pageable, String status) {
+        LandlordEntity landlord = getCurrentLandlord();
 
-        List<House> houses = houseRepository.findByLandlordId(currentLandlordId);
-        Landlord landlord = landlordRepository.findById(currentLandlordId)
-                .orElseThrow(() -> new NotFoundException("Landlord", currentLandlordId.value()));
+        Specification<HouseEntity> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("landlord"), landlord));
 
-        return houses.stream()
-                .map(house -> houseMapper.toResponse(house, landlord))
-                .toList();
-    }
+            if (status != null && !status.equalsIgnoreCase("ALL")) {
+                if (status.equalsIgnoreCase("VACANT")) {
+                    // Find houses that have at least one vacant room
+                    Subquery<RoomEntity> subquery = query.subquery(RoomEntity.class);
+                    Root<RoomEntity> subRoot = subquery.from(RoomEntity.class);
+                    subquery.select(subRoot);
+                    subquery.where(
+                            cb.equal(subRoot.get("house"), root), // Correlated subquery
+                            cb.equal(subRoot.get("status"), RoomStatus.VACANT)
+                    );
+                    predicates.add(cb.exists(subquery));
 
-    // This endpoint is now redundant if a landlord can only see their own houses.
-    // Kept for now, but could be removed.
-    public List<HouseResponse> getHousesByLandlord(UUID landlordId) {
-        log.warn("getHousesByLandlord is being called. This should be restricted or used only by ADMINs.");
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
-        if (!currentLandlordId.value().equals(landlordId)) {
-            throw new UnauthorizedException("You can only view your own houses.");
-        }
-        return getAllHouses();
-    }
+                } else if (status.equalsIgnoreCase("OCCUPIED")) {
+                    // Find houses where all rooms are occupied (and there's at least one room)
+                    // 1. House must have rooms
+                    Subquery<Long> countSubquery = query.subquery(Long.class);
+                    Root<RoomEntity> countSubRoot = countSubquery.from(RoomEntity.class);
+                    countSubquery.select(cb.count(countSubRoot));
+                    countSubquery.where(cb.equal(countSubRoot.get("house"), root));
+                    predicates.add(cb.greaterThan(countSubquery, 0L));
 
-    public List<HouseResponse> getHousesByStatus(String status) {
-        log.info("Getting houses by status: {} for current landlord", status);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
+                    // 2. No room exists with a status other than OCCUPIED
+                    Subquery<RoomEntity> subquery = query.subquery(RoomEntity.class);
+                    Root<RoomEntity> subRoot = subquery.from(RoomEntity.class);
+                    subquery.select(subRoot);
+                    subquery.where(
+                            cb.equal(subRoot.get("house"), root), // Correlated subquery
+                            cb.notEqual(subRoot.get("status"), RoomStatus.OCCUPIED)
+                    );
+                    predicates.add(cb.not(cb.exists(subquery)));
+                }
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-        House.HouseStatus houseStatus = House.HouseStatus.valueOf(status.toUpperCase());
-        List<House> houses = houseRepository.findByLandlordIdAndStatus(currentLandlordId, houseStatus);
+        Page<HouseEntity> housePage = houseRepository.findAll(spec, pageable);
 
-        Landlord landlord = landlordRepository.findById(currentLandlordId).orElse(null);
-        return houses.stream()
-                .map(house -> houseMapper.toResponse(house, landlord))
-                .toList();
+        List<HouseResponse> houseResponses = housePage.getContent().stream()
+                .map(house -> mapEntityToResponse(house, false))
+                .collect(Collectors.toList());
+
+        return PaginatedResponse.<List<HouseResponse>>builder()
+                .data(houseResponses)
+                .pagination(PaginatedResponse.Pagination.builder()
+                        .currentPage(housePage.getNumber())
+                        .totalPages(housePage.getTotalPages())
+                        .totalItems(housePage.getTotalElements())
+                        .itemsPerPage(housePage.getSize())
+                        .build())
+                .build();
     }
 
     @Transactional
     public HouseResponse updateHouse(UUID id, CreateHouseRequest request) {
-        log.info("Updating house ID: {}", id);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
+        HouseEntity houseEntity = houseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("House not found with ID: " + id));
 
-        House.HouseId houseId = new House.HouseId(id);
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new NotFoundException("House", id));
-
-        if (!house.getLandlordId().equals(currentLandlordId)) {
-            throw new UnauthorizedException("You are not authorized to update this house.");
+        // Check for property code uniqueness if it's being changed
+        if (!houseEntity.getPropertyCode().equals(request.getPropertyCode())) {
+            houseRepository.findByPropertyCode(request.getPropertyCode()).ifPresent(h -> {
+                throw new AlreadyExistsException("House with property code " + request.getPropertyCode() + " already exists.");
+            });
         }
 
-        Landlord landlord = landlordRepository.findById(currentLandlordId)
-                .orElseThrow(() -> new NotFoundException("Landlord", currentLandlordId.value()));
-
-        House.HouseType houseType = House.HouseType.valueOf(request.getHouseType().toUpperCase());
-        house.updateInformation(request.getName(), request.getDescription(), houseType);
-
-        Address newAddress = new Address(
-                request.getStreetAddress(), null, request.getDistrict(), request.getRegion(), request.getCountry(), null);
-        house.updateAddress(newAddress);
-
-        house.updateAmenities(request.getTotalFloors(), request.getYearBuilt(), request.getHasParking(), request.getHasSecurity());
-        if (request.getMonthlyCommonCharges() != null) {
-            house.updateCharges(request.getMonthlyCommonCharges());
-        }
-
-        House updatedHouse = houseRepository.save(house);
-        return houseMapper.toResponse(updatedHouse, landlord);
-    }
-
-    @Transactional
-    public HouseResponse markHouseForMaintenance(UUID id) {
-        log.info("Marking house for maintenance ID: {}", id);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
-
-        House.HouseId houseId = new House.HouseId(id);
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new NotFoundException("House", id));
-
-        if (!house.getLandlordId().equals(currentLandlordId)) {
-            throw new UnauthorizedException("You are not authorized to modify this house.");
-        }
-
-        house.markForMaintenance();
-        House updatedHouse = houseRepository.save(house);
-
-        Landlord landlord = landlordRepository.findById(house.getLandlordId()).orElse(null);
-        return houseMapper.toResponse(updatedHouse, landlord);
-    }
-
-    @Transactional
-    public HouseResponse markHouseAsActive(UUID id) {
-        log.info("Marking house as active ID: {}", id);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
-
-        House.HouseId houseId = new House.HouseId(id);
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new NotFoundException("House", id));
-
-        if (!house.getLandlordId().equals(currentLandlordId)) {
-            throw new UnauthorizedException("You are not authorized to modify this house.");
-        }
-
-        house.markAsActive();
-        House updatedHouse = houseRepository.save(house);
-
-        Landlord landlord = landlordRepository.findById(house.getLandlordId()).orElse(null);
-        return houseMapper.toResponse(updatedHouse, landlord);
-    }
-
-    @Transactional
-    public HouseResponse markHouseAsVacant(UUID id) {
-        log.info("Marking house as vacant ID: {}", id);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
-
-        House.HouseId houseId = new House.HouseId(id);
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new NotFoundException("House", id));
-
-        if (!house.getLandlordId().equals(currentLandlordId)) {
-            throw new UnauthorizedException("You are not authorized to modify this house.");
-        }
-
-        house.markAsVacant();
-        House updatedHouse = houseRepository.save(house);
-
-        Landlord landlord = landlordRepository.findById(house.getLandlordId()).orElse(null);
-        return houseMapper.toResponse(updatedHouse, landlord);
+        mapRequestToEntity(request, houseEntity);
+        HouseEntity updatedHouse = houseRepository.save(houseEntity);
+        return mapEntityToResponse(updatedHouse, false);
     }
 
     @Transactional
     public void deleteHouse(UUID id) {
-        log.info("Deleting house ID: {}", id);
-        Landlord.LandlordId currentLandlordId = getCurrentLandlordId();
+        HouseEntity houseEntity = houseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("House not found with ID: " + id));
+        houseRepository.delete(houseEntity);
+    }
 
-        House.HouseId houseId = new House.HouseId(id);
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new NotFoundException("House", id));
+    private LandlordEntity getCurrentLandlord() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return landlordRepository.findByUserUsername(username)
+                .orElseThrow(() -> new IllegalStateException("Landlord not found for current user."));
+    }
 
-        if (!house.getLandlordId().equals(currentLandlordId)) {
-            throw new UnauthorizedException("You are not authorized to delete this house.");
+    private void mapRequestToEntity(CreateHouseRequest request, HouseEntity entity) {
+        entity.setPropertyCode(request.getPropertyCode());
+        entity.setName(request.getName());
+        entity.setDescription(request.getDescription());
+        entity.setHouseType(request.getHouseType());
+        entity.setStreetAddress(request.getStreetAddress());
+        entity.setDistrict(request.getDistrict());
+        entity.setRegion(request.getRegion());
+        entity.setCountry(request.getCountry());
+        entity.setTotalFloors(request.getTotalFloors());
+        entity.setYearBuilt(request.getYearBuilt());
+        entity.setHasParking(request.getHasParking());
+        entity.setHasSecurity(request.getHasSecurity());
+        entity.setHasWater(request.getHasWater());
+        entity.setHasElectricity(request.getHasElectricity());
+        entity.setImageUrls(request.getImageUrls());
+        entity.setMonthlyCommonCharges(request.getMonthlyCommonCharges());
+    }
+
+    private HouseResponse mapEntityToResponse(HouseEntity entity, boolean includeRooms) {
+        HouseResponse.HouseResponseBuilder builder = HouseResponse.builder()
+                .id(entity.getId())
+                .propertyCode(entity.getPropertyCode())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .houseType(entity.getHouseType())
+                .streetAddress(entity.getStreetAddress())
+                .district(entity.getDistrict())
+                .region(entity.getRegion())
+                .country(entity.getCountry())
+                .totalFloors(entity.getTotalFloors())
+                .yearBuilt(entity.getYearBuilt())
+                .hasParking(entity.getHasParking())
+                .hasSecurity(entity.getHasSecurity())
+                .hasWater(entity.getHasWater())
+                .hasElectricity(entity.getHasElectricity())
+                .monthlyCommonCharges(entity.getMonthlyCommonCharges())
+                .imageUrls(entity.getImageUrls())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt());
+
+        int totalRooms = entity.getRooms().size();
+        int occupiedRooms = (int) entity.getRooms().stream().filter(r -> r.getStatus() == RoomStatus.OCCUPIED).count();
+        int vacantRooms = totalRooms - occupiedRooms;
+        BigDecimal monthlyIncome = entity.getRooms().stream()
+                .filter(r -> r.getStatus() == RoomStatus.OCCUPIED)
+                .map(RoomEntity::getMonthlyRent)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        builder.stats(HouseResponse.Stats.builder()
+                .totalRooms(totalRooms)
+                .occupiedRooms(occupiedRooms)
+                .vacantRooms(vacantRooms)
+                .monthlyIncome(monthlyIncome)
+                .build());
+
+        if (includeRooms) {
+            // This will be implemented later
         }
 
-        houseRepository.delete(houseId);
+        return builder.build();
     }
 }

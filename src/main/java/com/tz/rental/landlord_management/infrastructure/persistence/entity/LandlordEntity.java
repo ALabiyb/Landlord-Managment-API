@@ -39,6 +39,9 @@ public class LandlordEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    @OneToOne(mappedBy = "landlord", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private UserEntity user;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

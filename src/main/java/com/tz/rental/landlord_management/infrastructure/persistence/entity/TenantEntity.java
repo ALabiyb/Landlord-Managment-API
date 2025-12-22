@@ -18,6 +18,10 @@ public class TenantEntity {
     @Id
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "landlord_id", nullable = false)
+    private LandlordEntity landlord;
+
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
@@ -30,7 +34,7 @@ public class TenantEntity {
     @Column(name = "phone_number", nullable = false, unique = true)
     private String phoneNumber;
 
-    @Column(name = "national_id", nullable = false, unique = true)
+    @Column(name = "national_id", unique = true)
     private String nationalId;
 
     @Column(name = "emergency_contact_name")
@@ -39,8 +43,8 @@ public class TenantEntity {
     @Column(name = "emergency_contact_phone")
     private String emergencyContactPhone;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
