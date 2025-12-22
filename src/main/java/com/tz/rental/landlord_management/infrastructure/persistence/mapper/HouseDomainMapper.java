@@ -52,28 +52,21 @@ public class HouseDomainMapper {
         House.HouseType houseType = House.HouseType.valueOf(entity.getHouseType().name());
         
         // Defaulting to VACANT as status is not stored in entity anymore
-        // In a real scenario, we might want to calculate this or fetch it separately
         House.HouseStatus status = House.HouseStatus.VACANT; 
 
-        return House.fromExisting(
-                entity.getId(),
-                entity.getPropertyCode(),
-                entity.getName(),
-                entity.getDescription(),
-                houseType,
-                entity.getLandlord().getId(),
-                address,
-                entity.getTotalFloors(),
-                entity.getYearBuilt(),
-                entity.getHasParking(),
-                entity.getHasSecurity(),
-                entity.getHasWater(),
-                entity.getHasElectricity(),
-                entity.getImageUrls(),
-                entity.getMonthlyCommonCharges(),
-                status,
-                entity.getCreatedAt(),
-                entity.getUpdatedAt()
-        );
+        return new House.HouseBuilder(entity.getId(), entity.getLandlord().getId(), entity.getCreatedAt())
+                .propertyCode(entity.getPropertyCode())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .houseType(houseType)
+                .address(address)
+                .totalFloors(entity.getTotalFloors())
+                .yearBuilt(entity.getYearBuilt())
+                .amenities(entity.getHasParking(), entity.getHasSecurity(), entity.getHasWater(), entity.getHasElectricity())
+                .imageUrls(entity.getImageUrls())
+                .monthlyCommonCharges(entity.getMonthlyCommonCharges())
+                .status(status)
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 }

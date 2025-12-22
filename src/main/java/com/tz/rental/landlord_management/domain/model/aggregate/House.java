@@ -145,28 +145,6 @@ public class House {
         }
     }
 
-    // Refactored factory method using the builder
-    public static House fromExisting(UUID id, String propertyCode, String name, String description, HouseType houseType,
-                                     UUID landlordId, Address address, Integer totalFloors, Integer yearBuilt,
-                                     Boolean hasParking, Boolean hasSecurity, Boolean hasWater, Boolean hasElectricity,
-                                     List<String> imageUrls, BigDecimal monthlyCommonCharges, HouseStatus status,
-                                     LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new HouseBuilder(id, landlordId, createdAt)
-                .propertyCode(propertyCode)
-                .name(name)
-                .description(description)
-                .houseType(houseType)
-                .address(address)
-                .totalFloors(totalFloors)
-                .yearBuilt(yearBuilt)
-                .amenities(hasParking, hasSecurity, hasWater, hasElectricity)
-                .imageUrls(imageUrls)
-                .monthlyCommonCharges(monthlyCommonCharges)
-                .status(status)
-                .updatedAt(updatedAt)
-                .build();
-    }
-
     public void updateInformation(String name, String description, HouseType houseType) {
         this.name = name;
         this.description = description;

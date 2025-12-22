@@ -19,7 +19,7 @@ public class LandlordRegistrationRequest {
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters long")
-    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[\\W_]).{8,}$", message = "Password must contain at least one uppercase letter, one number, and one special character")
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).{8,}$", message = "Password must contain at least one uppercase letter, one number, and one special character")
     @Schema(description = "The password for the account", example = "Password123!")
     private String password;
 
@@ -37,7 +37,7 @@ public class LandlordRegistrationRequest {
     private String email;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^(\\+255|0)[0-9]{9}$", message = "Phone number must be in format +255XXXXXXXXX or 0XXXXXXXXX")
+    @Pattern(regexp = "^(\\+255|0)\\d{9}$", message = "Phone number must be in format +255XXXXXXXXX or 0XXXXXXXXX")
     @Schema(description = "Phone number of the landlord", example = "+255712345678")
     private String phoneNumber;
 

@@ -1,42 +1,34 @@
 package com.tz.rental.landlord_management.infrastructure.persistence.mapper;
 
 import com.tz.rental.landlord_management.domain.model.aggregate.Room;
-import com.tz.rental.landlord_management.infrastructure.persistence.entity.HouseEntity;
 import com.tz.rental.landlord_management.infrastructure.persistence.entity.RoomEntity;
 import org.springframework.stereotype.Component;
 
-@Component("persistenceRoomMapper")
+@Component
 public class RoomMapper {
 
-    public RoomEntity toEntity(Room room) {
-        RoomEntity entity = new RoomEntity();
-        entity.setId(room.getId().value());
-        HouseEntity houseEntity = new HouseEntity();
-        houseEntity.setId(room.getHouseId().value());
-        entity.setHouse(houseEntity);
-        entity.setRoomNumber(room.getRoomNumber());
-        entity.setDescription(room.getDescription());
-        entity.setMonthlyRent(room.getMonthlyRent());
-        entity.setStatus(room.getStatus());
-        entity.setSize(room.getSize());
-        entity.setImageUrls(room.getImageUrls());
-        entity.setCreatedAt(room.getCreatedAt());
-        entity.setUpdatedAt(room.getUpdatedAt());
-        return entity;
+    public Room toDomain(RoomEntity entity) {
+        return new Room.RoomBuilder(entity.getId(), entity.getHouse().getId(), entity.getCreatedAt())
+                .roomNumber(entity.getRoomNumber())
+                .monthlyRent(entity.getMonthlyRent())
+                .description(entity.getDescription())
+                .status(entity.getStatus())
+                .size(entity.getSize())
+                .imageUrls(entity.getImageUrls())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 
-    public Room toDomain(RoomEntity entity) {
-        return Room.fromExisting(
-                entity.getId(),
-                entity.getHouse().getId(),
-                entity.getRoomNumber(),
-                entity.getMonthlyRent(),
-                entity.getDescription(),
-                entity.getStatus(),
-                entity.getSize(),
-                entity.getImageUrls(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt()
-        );
+    public RoomEntity toEntity(Room domain) {
+        RoomEntity entity = new RoomEntity();
+        entity.setId(domain.getId().value());
+        // Assuming houseId is set elsewhere or handled via relationship
+        entity.setRoomNumber(domain.getRoomNumber());
+        entity.setDescription(domain.getDescription());
+        entity.setMonthlyRent(domain.getMonthlyRent());
+        entity.setStatus(domain.getStatus());
+        entity.setSize(domain.getSize());
+        entity.setImageUrls(domain.getImageUrls());
+        return entity;
     }
 }
