@@ -16,9 +16,10 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
+        fsGroup: 1001
       containers:
         - name: landlord-app
-          image: munimdevops/landlord-management-api:67
+          image: munimdevops/landlord-management-api:94
           ports:
             - containerPort: 8082
           env:

@@ -137,7 +137,7 @@ pipeline {
             }
         }
 
-        stage('Vulnerability Scan - Application Image') {
+        stage('k8s security check') {
             steps {
                 script {
                     vulnScanApplicationImage(
