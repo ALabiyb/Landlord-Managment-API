@@ -45,7 +45,7 @@ RUN addgroup -g 1001 -S appgroup && \
 # Copy ONLY the built JAR from stage 1
 COPY --from=build /app/target/landlord-management-*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8082
 USER appuser
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

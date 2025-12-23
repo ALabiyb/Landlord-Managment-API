@@ -15,7 +15,7 @@ services:
   app:
     build: .
     ports:
-      - "8088:8082"
+      - "8082:8082"
     environment:
       # Point the Spring Boot app to the 'db' service inside the compose network
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/landlord_management_tz
