@@ -37,6 +37,7 @@ spec:
             - name: JWT_SECRET
               value: "YmFzZTY0LWVuY29kZWQtc3VwZXItc2VjcmV0LWtleS1mb3Itand0LXRlc3RpbmctcHJvamVjdA==" # This should be in a Secret in production
           securityContext:
+            runAsNonRoot: true
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:

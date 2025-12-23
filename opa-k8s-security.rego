@@ -52,9 +52,11 @@ violation contains msg if {
     ])
 }
 
-# === Require readOnlyRootFilesystem ===
+# === Require readOnlyRootFilesystem (except for stateful databases) ===
 violation contains msg if {
     container := input.spec.template.spec.containers[_]
+    # Exclude known stateful containers that need write access
+    not container.name in {"postgres", "mysql", "mongodb", "redis", "cassandra"}
     not container.securityContext.readOnlyRootFilesystem == true
     msg := sprintf("Container '%s' in %s '%s' must have readOnlyRootFilesystem: true", [
         container.name,
@@ -62,6 +64,17 @@ violation contains msg if {
         input.metadata.name
     ])
 }
+
+# === Require readOnlyRootFilesystem ===
+#violation contains msg if {
+#    container := input.spec.template.spec.containers[_]
+#    not container.securityContext.readOnlyRootFilesystem == true
+#    msg := sprintf("Container '%s' in %s '%s' must have readOnlyRootFilesystem: true", [
+#        container.name,
+#        input.kind,
+#        input.metadata.name
+#    ])
+#}
 
 # === Require resource limits ===
 violation contains msg if {
