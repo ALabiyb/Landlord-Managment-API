@@ -1,121 +1,119 @@
 package main
 
-# === Deny if no namespace is specified (except for namespace resource itself) ===
+# === Deny resources without namespace (except Namespace itself) ===
 violation contains msg if {
-    input.review.kind.kind != "Namespace"
-    not input.review.namespace
-    msg := sprintf("Resource %s/%s must be in a namespace", [input.review.kind.kind, input.review.name])
+    input.kind != "Namespace"
+    not input.metadata.namespace
+    msg := sprintf("Resource %s '%s' must specify a namespace", [input.kind, input.metadata.name])
 }
 
-# === Deny running as root (user 0) ===
+# === Deny explicit runAsUser: 0 (running as root) ===
 violation contains msg if {
-    container := input.review.object.spec.containers[_]
+    container := input.spec.template.spec.containers[_]
     container.securityContext.runAsUser == 0
-    msg := sprintf("Container '%s' in %s/%s is running as root (runAsUser: 0)", [
+    msg := sprintf("Container '%s' in %s '%s' explicitly runs as root (runAsUser: 0)", [
         container.name,
-        input.review.kind.kind,
-        input.review.object.metadata.name
+        input.kind,
+        input.metadata.name
+    ])
+}
+
+# === Require runAsNonRoot: true (best practice - catches missing or false) ===
+violation contains msg if {
+    container := input.spec.template.spec.containers[_]
+    security := container.securityContext
+    not security.runAsNonRoot == true
+    msg := sprintf("Container '%s' in %s '%s' must set securityContext.runAsNonRoot: true", [
+        container.name,
+        input.kind,
+        input.metadata.name
     ])
 }
 
 # === Deny privileged containers ===
 violation contains msg if {
-    container := input.review.object.spec.containers[_]
+    container := input.spec.template.spec.containers[_]
     container.securityContext.privileged == true
-    msg := sprintf("Container '%s' in %s/%s is running in privileged mode", [
+    msg := sprintf("Container '%s' in %s '%s' is privileged", [
         container.name,
-        input.review.kind.kind,
-        input.review.object.metadata.name
+        input.kind,
+        input.metadata.name
     ])
 }
 
-# === Deny containers that can escalate privileges ===
+# === Deny privilege escalation ===
 violation contains msg if {
-    container := input.review.object.spec.containers[_]
+    container := input.spec.template.spec.containers[_]
     container.securityContext.allowPrivilegeEscalation == true
-    msg := sprintf("Container '%s' in %s/%s allows privilege escalation", [
+    msg := sprintf("Container '%s' in %s '%s' allows privilege escalation", [
         container.name,
-        input.review.kind.kind,
-        input.review.object.metadata.name
+        input.kind,
+        input.metadata.name
     ])
 }
 
-# === Deny containers without read-only root filesystem ===
+# === Require readOnlyRootFilesystem ===
 violation contains msg if {
-    container := input.review.object.spec.containers[_]
-    not container.securityContext.readOnlyRootFilesystem
-    msg := sprintf("Container '%s' in %s/%s does not have readOnlyRootFilesystem enabled", [
+    container := input.spec.template.spec.containers[_]
+    not container.securityContext.readOnlyRootFilesystem == true
+    msg := sprintf("Container '%s' in %s '%s' must have readOnlyRootFilesystem: true", [
         container.name,
-        input.review.kind.kind,
-        input.review.object.metadata.name
+        input.kind,
+        input.metadata.name
     ])
 }
 
-# === Deny containers without resource limits ===
+# === Require resource limits ===
 violation contains msg if {
-    container := input.review.object.spec.containers[_]
+    container := input.spec.template.spec.containers[_]
     not container.resources.limits
-    msg := sprintf("Container '%s' in %s/%s is missing resource limits", [
+    msg := sprintf("Container '%s' in %s '%s' must define resource limits", [
         container.name,
-        input.review.kind.kind,
-        input.review.object.metadata.name
+        input.kind,
+        input.metadata.name
     ])
 }
 
 # === Deny hostPID and hostIPC ===
 violation contains msg if {
-    input.review.object.spec.hostPID == true
-    msg := sprintf("Host PID sharing is not allowed in %s/%s", [
-        input.review.kind.kind,
-        input.review.object.metadata.name
-    ])
+    input.spec.template.spec.hostPID == true
+    msg := sprintf("Host PID sharing is not allowed in %s '%s'", [input.kind, input.metadata.name])
 }
 
 violation contains msg if {
-    input.review.object.spec.hostIPC == true
-    msg := sprintf("Host IPC sharing is not allowed in %s/%s", [
-        input.review.kind.kind,
-        input.review.object.metadata.name
+    input.spec.template.spec.hostIPC == true
+    msg := sprintf("Host IPC sharing is not allowed in %s '%s'", [input.kind, input.metadata.name])
+}
+
+# === Deny dangerous hostPath mounts (/proc, /sys, /) ===
+violation contains msg if {
+    volume := input.spec.template.spec.volumes[_]
+    volume.hostPath
+    volume.hostPath.path in {"/proc", "/sys", "/"}
+    msg := sprintf("Mounting '%s' via hostPath is not allowed in %s '%s'", [
+        volume.hostPath.path,
+        input.kind,
+        input.metadata.name
     ])
 }
 
-# === Deny dangerous hostPath mounts ===
+# === Deny :latest tag on container images ===
 violation contains msg if {
-    volume := input.review.object.spec.volumes[_]
-    volume.hostPath.path == "/proc"
-    msg := sprintf("Mounting /proc is not allowed in %s/%s", [
-        input.review.kind.kind,
-        input.review.object.metadata.name
-    ])
-}
-
-violation contains msg if {
-    volume := input.review.object.spec.volumes[_]
-    volume.hostPath.path == "/sys"
-    msg := sprintf("Mounting /sys is not allowed in %s/%s", [
-        input.review.kind.kind,
-        input.review.object.metadata.name
-    ])
-}
-
-# === Require runAsUser to be set (non-root recommended) ===
-violation contains msg if {
-    container := input.review.object.spec.containers[_]
-    not container.securityContext.runAsUser
-    msg := sprintf("Container '%s' in %s/%s does not specify runAsUser (non-root recommended)", [
-        container.name,
-        input.review.kind.kind,
-        input.review.object.metadata.name
-    ])
-}
-
-# === Deny :latest tag on images ===
-violation contains msg if {
-    container := input.review.object.spec.containers[_]
+    container := input.spec.template.spec.containers[_]
     endswith(container.image, ":latest")
-    msg := sprintf("Image '%s' in %s/%s uses ':latest' tag - use specific version", [
-        container.image,
-        input.review.kind.kind,
-        input.review.object.metadata.name
+    msg := sprintf("Container '%s' in %s '%s' uses ':latest' tag - pin to specific version", [
+        container.name,
+        input.kind,
+        input.metadata.name
+    ])
+}
+
+# === Service must be NodePort (your custom rule) ===
+violation contains msg if {
+    input.kind == "Service"
+    input.spec.type != "NodePort"
+    msg := sprintf("Service '%s' must use type NodePort (current: %s)", [
+        input.metadata.name,
+        input.spec.type
     ])
 }
