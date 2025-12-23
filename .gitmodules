@@ -1,0 +1,3 @@
+[submodule "k8s-manifest"]
+	path = k8s-manifest
+	url = https://github.com/ALabiyb/landlord-management-k8s.git
