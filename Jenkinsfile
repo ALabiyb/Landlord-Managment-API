@@ -34,6 +34,11 @@ pipeline {
         GIT_REPO_URL = 'https://github.com/ALabiyb/Landlord-Managment-API.git'
         GIT_CREDENTIALS_ID = 'github-personal-access-token' // Jenkins credential ID for Git access
 
+        //K8s repo config
+        K8S_MANIFEST_REPO_URL = 'https://github.com/ALabiyb/landlord-management-k8s.git'
+        K8S_MANIFEST_CREDENTIALS_ID = 'github-personal-access-token'
+        K8S_MANIFEST_BRANCH = 'main'  // optional, defaults to main
+
 
         // Build info
         BUILD_DATE_UTC = sh(script: "date -u +'%Y-%m-%dT%H:%M:%SZ'", returnStdout: true).trim()
@@ -48,7 +53,7 @@ pipeline {
         stage('Checkout and Git Info') {
             steps {
                 script {
-                    checkoutAndGitInfo(repo: env.GIT_REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID, branch: env.BRANCH_NAME) // Uses env.GIT_REPO_URL, env.GIT_CREDENTIALS_ID, env.BRANCH_NAME automatically
+                    checkoutAndGitInfo(repo: env.GIT_REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID, branch: env.BRANCH_NAME, checkoutSubmodules: true) // Uses env.GIT_REPO_URL, env.GIT_CREDENTIALS_ID, env.BRANCH_NAME automatically
                 }
             }
         }
@@ -137,12 +142,10 @@ pipeline {
             }
         }
 
-        stage('k8s security check') {
+        stage('k8s Manifest Cloning & Update') {
             steps {
                 script {
-                    vulnScanApplicationImage(
-                            imageName: env.FINAL_IMAGE_NAME // Uses the image built in the previous stage
-                    )
+                    k8sManifestScanAndUpdate()
                 }
             }
         }
