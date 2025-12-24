@@ -53,7 +53,7 @@ pipeline {
         stage('Checkout and Git Info') {
             steps {
                 script {
-                    checkoutAndGitInfo(repo: env.GIT_REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID, branch: env.BRANCH_NAME, checkoutSubmodules: true) // Uses env.GIT_REPO_URL, env.GIT_CREDENTIALS_ID, env.BRANCH_NAME automatically
+                    checkoutAndGitInfo(repo: env.GIT_REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID, branch: env.BRANCH_NAME) // Uses env.GIT_REPO_URL, env.GIT_CREDENTIALS_ID, env.BRANCH_NAME automatically
                 }
             }
         }
