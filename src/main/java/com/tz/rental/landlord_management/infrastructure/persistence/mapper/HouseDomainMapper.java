@@ -7,7 +7,10 @@ import com.tz.rental.landlord_management.infrastructure.persistence.entity.Landl
 import org.springframework.stereotype.Component;
 
 @Component
+@lombok.RequiredArgsConstructor
 public class HouseDomainMapper {
+
+    private final HouseImageDomainMapper houseImageDomainMapper;
 
     public HouseEntity toEntity(House house) {
         HouseEntity entity = new HouseEntity();
@@ -16,7 +19,8 @@ public class HouseDomainMapper {
         entity.setName(house.getName());
         entity.setDescription(house.getDescription());
         // Map domain HouseType to entity HouseType
-        entity.setHouseType(com.tz.rental.landlord_management.domain.model.valueobject.HouseType.valueOf(house.getHouseType().name()));
+        entity.setHouseType(com.tz.rental.landlord_management.domain.model.valueobject.HouseType
+                .valueOf(house.getHouseType().name()));
 
         LandlordEntity landlord = new LandlordEntity();
         landlord.setId(house.getLandlordId().value());
@@ -32,7 +36,13 @@ public class HouseDomainMapper {
         entity.setHasSecurity(house.getHasSecurity());
         entity.setHasWater(house.getHasWater());
         entity.setHasElectricity(house.getHasElectricity());
-        entity.setImageUrls(house.getImageUrls());
+
+        if (house.getImages() != null) {
+            entity.setImages(house.getImages().stream()
+                    .map(img -> houseImageDomainMapper.toEntity(img, entity))
+                    .collect(java.util.stream.Collectors.toList()));
+        }
+
         entity.setMonthlyCommonCharges(house.getMonthlyCommonCharges());
         // Status is no longer stored in HouseEntity, it's derived
 
@@ -50,9 +60,16 @@ public class HouseDomainMapper {
         );
 
         House.HouseType houseType = House.HouseType.valueOf(entity.getHouseType().name());
-        
+
         // Defaulting to VACANT as status is not stored in entity anymore
-        House.HouseStatus status = House.HouseStatus.VACANT; 
+        House.HouseStatus status = House.HouseStatus.VACANT;
+
+        java.util.List<com.tz.rental.landlord_management.domain.model.aggregate.HouseImage> images = new java.util.ArrayList<>();
+        if (entity.getImages() != null) {
+            images = entity.getImages().stream()
+                    .map(houseImageDomainMapper::toDomain)
+                    .collect(java.util.stream.Collectors.toList());
+        }
 
         return new House.HouseBuilder(entity.getId(), entity.getLandlord().getId(), entity.getCreatedAt())
                 .propertyCode(entity.getPropertyCode())
@@ -62,8 +79,9 @@ public class HouseDomainMapper {
                 .address(address)
                 .totalFloors(entity.getTotalFloors())
                 .yearBuilt(entity.getYearBuilt())
-                .amenities(entity.getHasParking(), entity.getHasSecurity(), entity.getHasWater(), entity.getHasElectricity())
-                .imageUrls(entity.getImageUrls())
+                .amenities(entity.getHasParking(), entity.getHasSecurity(), entity.getHasWater(),
+                        entity.getHasElectricity())
+                .images(images)
                 .monthlyCommonCharges(entity.getMonthlyCommonCharges())
                 .status(status)
                 .updatedAt(entity.getUpdatedAt())

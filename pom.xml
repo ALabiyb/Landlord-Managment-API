@@ -23,7 +23,7 @@
 		<java.version>21</java.version>
 		<poi.version>5.4.0</poi.version> <!-- Apache POI version -->
 		<jjwt.version>0.11.5</jjwt.version> <!-- JWT library version -->
-		<lombok.version>1.18.30</lombok.version> <!-- Explicit Lombok version -->
+		<lombok.version>1.18.42</lombok.version> <!-- Explicit Lombok version for JDK 24 support -->
 	</properties>
 
 	<dependencies>
@@ -85,6 +85,17 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Flyway Database Migration -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -175,6 +186,13 @@
 			<version>${poi.version}</version>
 		</dependency>
 
+		<!-- Image processing -->
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+			<version>0.4.20</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -183,8 +201,8 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-<!--				<version>3.11.0</version> &lt;!&ndash; Use a stable version &ndash;&gt;-->
-				<version>3.14.1</version>
+				<version>3.13.0</version>
+
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
@@ -194,7 +212,6 @@
 							<artifactId>lombok</artifactId>
 							<version>${lombok.version}</version>
 						</path>
-						<!-- Add other annotation processors here if needed -->
 					</annotationProcessorPaths>
 					<compilerArgs>
 						<arg>-parameters</arg>

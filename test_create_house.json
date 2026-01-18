@@ -1,0 +1,15 @@
+{
+    "propertyCode": "PROP-001",
+    "name": "Test Apartment Building",
+    "houseType": "APARTMENT",
+    "district": "Kinondoni",
+    "region": "Dar es Salaam",
+    "country": "Tanzania",
+    "streetAddress": "Msasani Road",
+    "description": "Modern apartment building with parking",
+    "totalFloors": 5,
+    "hasParking": true,
+    "hasSecurity": true,
+    "hasWater": true,
+    "hasElectricity": true
+}

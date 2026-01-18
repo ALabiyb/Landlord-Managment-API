@@ -8,7 +8,7 @@ COPY pom.xml .
 COPY src ./src
 
 # Build the JAR (skip tests for faster build, or remove -DskipTests if you want them)
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -Dmaven.test.skip=true -B
 
 # ============ STAGE 2: Create Runtime Image ============
 FROM eclipse-temurin:21-jre-alpine
@@ -29,18 +29,22 @@ RUN apk add --no-cache tzdata && \
 
 # Labels
 LABEL org.opencontainers.image.title="Landlord Management API" \
-      org.opencontainers.image.description="This API provides endpoints for managing rental properties, landlords, tenants, leases, and payments in Tanzania." \
-      org.opencontainers.image.version="${VERSION}" \
-      org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.authors="${GIT_AUTHOR}" \
-      org.opencontainers.image.revision="${GIT_COMMIT}" \
-      org.opencontainers.image.timezone="${APP_TIMEZONE}"
+    org.opencontainers.image.description="This API provides endpoints for managing rental properties, landlords, tenants, leases, and payments in Tanzania." \
+    org.opencontainers.image.version="${VERSION}" \
+    org.opencontainers.image.created="${BUILD_DATE}" \
+    org.opencontainers.image.authors="${GIT_AUTHOR}" \
+    org.opencontainers.image.revision="${GIT_COMMIT}" \
+    org.opencontainers.image.timezone="${APP_TIMEZONE}"
 
 WORKDIR /app
 
 # Non-root user
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
+
+# Create uploads directory and set permissions
+RUN mkdir -p /app/uploads/images && \
+    chown -R appuser:appgroup /app/uploads
 
 # Copy ONLY the built JAR from stage 1
 COPY --from=build /app/target/landlord-management-*.jar app.jar

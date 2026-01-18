@@ -25,7 +25,7 @@ public class House {
     private Boolean hasSecurity;
     private Boolean hasWater;
     private Boolean hasElectricity;
-    private List<String> imageUrls;
+    private List<HouseImage> images;
     private BigDecimal monthlyCommonCharges;
     private HouseStatus status;
     private final LocalDateTime createdAt;
@@ -53,12 +53,13 @@ public class House {
         this.landlordId = landlordId;
         this.createdAt = createdAt;
         this.updatedAt = createdAt; // Initially same as createdAt
-        this.imageUrls = new ArrayList<>();
+        this.images = new ArrayList<>();
         this.status = HouseStatus.ACTIVE;
     }
 
     // Factory method for creating new houses
-    public static House create(String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId, Address address) {
+    public static House create(String propertyCode, String name, HouseType houseType, Landlord.LandlordId landlordId,
+            Address address) {
         House house = new House(new HouseId(UUID.randomUUID()), landlordId, LocalDateTime.now());
         house.propertyCode = propertyCode;
         house.name = name;
@@ -111,7 +112,8 @@ public class House {
             return this;
         }
 
-        public HouseBuilder amenities(Boolean hasParking, Boolean hasSecurity, Boolean hasWater, Boolean hasElectricity) {
+        public HouseBuilder amenities(Boolean hasParking, Boolean hasSecurity, Boolean hasWater,
+                Boolean hasElectricity) {
             house.hasParking = hasParking;
             house.hasSecurity = hasSecurity;
             house.hasWater = hasWater;
@@ -119,8 +121,8 @@ public class House {
             return this;
         }
 
-        public HouseBuilder imageUrls(List<String> imageUrls) {
-            house.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
+        public HouseBuilder images(List<HouseImage> images) {
+            house.images = images != null ? images : new ArrayList<>();
             return this;
         }
 
@@ -158,7 +160,8 @@ public class House {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateAmenities(Integer totalFloors, Integer yearBuilt, Boolean hasParking, Boolean hasSecurity, Boolean hasWater, Boolean hasElectricity) {
+    public void updateAmenities(Integer totalFloors, Integer yearBuilt, Boolean hasParking, Boolean hasSecurity,
+            Boolean hasWater, Boolean hasElectricity) {
         this.totalFloors = totalFloors;
         this.yearBuilt = yearBuilt;
         this.hasParking = hasParking;
@@ -168,11 +171,11 @@ public class House {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void addImageUrl(String url) {
-        if (this.imageUrls == null) {
-            this.imageUrls = new ArrayList<>();
+    public void addImage(HouseImage image) {
+        if (this.images == null) {
+            this.images = new ArrayList<>();
         }
-        this.imageUrls.add(url);
+        this.images.add(image);
         this.updatedAt = LocalDateTime.now();
     }
 

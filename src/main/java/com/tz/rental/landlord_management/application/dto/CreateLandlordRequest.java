@@ -24,8 +24,7 @@ public class CreateLandlordRequest {
     private String email;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+255[0-9]{9}$",
-            message = "Phone number must be in format +255XXXXXXXXX")
+    @Pattern(regexp = "^(\\+255|0)\\d{9}$", message = "Phone number must be in format +255XXXXXXXXX or 0XXXXXXXXX")
     @Schema(description = "Phone number of the landlord", example = "+255712345678")
     private String phoneNumber;
 

@@ -8,146 +8,143 @@ import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.HorizontalAlignment; // Added import
+import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.tz.rental.landlord_management.application.dto.MonthlyIncomeReport;
 import com.tz.rental.landlord_management.application.dto.MonthlyIncomeReportEntry;
 import com.tz.rental.landlord_management.application.dto.VacancyReport;
 import com.tz.rental.landlord_management.application.dto.VacancyReportEntry;
-import com.tz.rental.landlord_management.domain.model.aggregate.*;
-import com.tz.rental.landlord_management.domain.repository.*;
+import com.tz.rental.landlord_management.infrastructure.persistence.entity.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate; // Added import
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PdfGenerationService {
 
-    private static final String REPORTS_DIR = "reports";
-    private static final String CONTRACTS_DIR = "contracts";
+    public byte[] generateContractPdf(LeaseEntity lease, TenantEntity tenant, ContractTemplateEntity template)
+            throws IOException {
+        String populatedContent = populateTemplate(template.getContent(), lease, tenant);
 
-    private final ContractTemplateRepository contractTemplateRepository;
-    private final TenantRepository tenantRepository;
-    private final RoomRepository roomRepository;
-    private final HouseRepository houseRepository;
-    private final LandlordRepository landlordRepository;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PdfWriter writer = new PdfWriter(baos);
+                PdfDocument pdf = new PdfDocument(writer);
+                Document document = new Document(pdf)) {
 
-    public String generateContract(Lease lease, Tenant tenant, UUID templateId) throws IOException {
-        Path contractsPath = Paths.get(CONTRACTS_DIR);
-        if (!Files.exists(contractsPath)) {
-            Files.createDirectories(contractsPath);
-        }
+            document.add(new Paragraph("RENTAL AGREEMENT")
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBold()
+                    .setFontSize(18));
+            document.add(new Paragraph("\n"));
 
-        String fileName = "lease-" + lease.getId().value() + ".pdf";
-        File file = new File(CONTRACTS_DIR + "/" + fileName);
-
-        ContractTemplate template = contractTemplateRepository.findById(templateId)
-                .orElseThrow(() -> new IllegalArgumentException("Contract template not found."));
-
-        // Fetch all necessary data for placeholders
-        Room room = roomRepository.findById(lease.getRoomId().value())
-                .orElseThrow(() -> new IllegalArgumentException("Room not found for lease."));
-        House house = houseRepository.findById(room.getHouseId())
-                .orElseThrow(() -> new IllegalArgumentException("House not found for room."));
-        // FIX: Wrap UUID in Landlord.LandlordId
-        Landlord landlord = landlordRepository.findById(new Landlord.LandlordId(house.getLandlordId().value()))
-                .orElseThrow(() -> new IllegalArgumentException("Landlord not found for house."));
-
-
-        String populatedContent = populateTemplate(template.getContent(), lease, tenant, room, house, landlord);
-
-        try (PdfWriter writer = new PdfWriter(file);
-             PdfDocument pdf = new PdfDocument(writer);
-             Document document = new Document(pdf)) {
-
-            // Add content paragraph by paragraph, assuming simple text for now
-            // For more complex templates (HTML/Markdown), a parser would be needed
+            // Simple text replacement for now.
             for (String line : populatedContent.split("\n")) {
                 document.add(new Paragraph(line));
             }
-        }
 
-        return file.getPath();
+            document.close();
+            return baos.toByteArray();
+        }
     }
 
-    private String populateTemplate(String templateContent, Lease lease, Tenant tenant, Room room, House house, Landlord landlord) {
+    private String populateTemplate(String templateContent, LeaseEntity lease, TenantEntity tenant) {
         String content = templateContent;
+        RoomEntity room = lease.getRoom();
+        HouseEntity house = room.getHouse();
+        LandlordEntity landlord = house.getLandlord();
 
         // Tenant details
         content = content.replace("{{tenantName}}", tenant.getFirstName() + " " + tenant.getLastName());
         content = content.replace("{{tenantFirstName}}", tenant.getFirstName());
         content = content.replace("{{tenantLastName}}", tenant.getLastName());
-        content = content.replace("{{tenantEmail}}", tenant.getEmail().getValue());
-        content = content.replace("{{tenantPhoneNumber}}", tenant.getPhoneNumber().getValue());
-        content = content.replace("{{tenantNationalId}}", tenant.getNationalId());
+        content = content.replace("{{tenantEmail}}", tenant.getEmail());
+        content = content.replace("{{tenantPhoneNumber}}", tenant.getPhoneNumber());
+        content = content.replace("{{tenantNationalId}}",
+                tenant.getNationalId() != null ? tenant.getNationalId() : "N/A");
 
         // Landlord details
         content = content.replace("{{landlordName}}", landlord.getFirstName() + " " + landlord.getLastName());
         content = content.replace("{{landlordFirstName}}", landlord.getFirstName());
         content = content.replace("{{landlordLastName}}", landlord.getLastName());
-        content = content.replace("{{landlordEmail}}", landlord.getEmail().getValue());
-        content = content.replace("{{landlordPhoneNumber}}", landlord.getPhoneNumber().getValue());
+        content = content.replace("{{landlordEmail}}", landlord.getEmail());
+        content = content.replace("{{landlordPhoneNumber}}",
+                landlord.getPhoneNumber() != null ? landlord.getPhoneNumber() : "N/A");
 
         // House details
         content = content.replace("{{houseName}}", house.getName());
         content = content.replace("{{propertyCode}}", house.getPropertyCode());
-        content = content.replace("{{houseAddress}}", house.getAddress().getFullAddress());
-        content = content.replace("{{houseDistrict}}", house.getAddress().getDistrict());
-        content = content.replace("{{houseRegion}}", house.getAddress().getRegion());
+        if (house.getStreetAddress() != null) {
+            content = content.replace("{{houseAddress}}",
+                    house.getStreetAddress() + ", " + house.getDistrict() + ", " + house.getRegion());
+        } else {
+            content = content.replace("{{houseAddress}}", house.getDistrict() + ", " + house.getRegion());
+        }
+        content = content.replace("{{houseDistrict}}", house.getDistrict());
+        content = content.replace("{{houseRegion}}", house.getRegion());
 
         // Room details
         content = content.replace("{{roomNumber}}", room.getRoomNumber());
-        content = content.replace("{{roomDescription}}", room.getDescription());
+        content = content.replace("{{roomDescription}}", room.getDescription() != null ? room.getDescription() : "");
 
         // Lease details
-        content = content.replace("{{leaseId}}", lease.getId().value().toString());
+        content = content.replace("{{leaseId}}", lease.getId().toString());
         content = content.replace("{{leaseStartDate}}", lease.getStartDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         content = content.replace("{{leaseEndDate}}", lease.getEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         content = content.replace("{{rentAmount}}", lease.getRentAmount().toString());
-        content = content.replace("{{paymentPeriod}}", lease.getPaymentPeriod().name());
+
+        if (lease.getPaymentPeriod() != null) {
+            content = content.replace("{{paymentPeriod}}", lease.getPaymentPeriod().toString());
+        } else {
+            content = content.replace("{{paymentPeriod}}", "N/A");
+        }
+
         content = content.replace("{{leaseStatus}}", lease.getStatus().name());
 
         // Current Date
         content = content.replace("{{currentDate}}", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
 
+        // Additional Swahili Specific / Detail Placeholders
+        long monthsBetween = java.time.temporal.ChronoUnit.MONTHS.between(lease.getStartDate(), lease.getEndDate());
+        content = content.replace("{{leaseDuration}}", String.valueOf(monthsBetween));
+
+        // placeholders for security deposit often equal to monthly rent
+        content = content.replace("{{securityDeposit}}", lease.getRentAmount().toString());
+
+        // Placeholders not yet in entity but useful in template
+        content = content.replace("{{landlordAddress}}", "Dar es Salaam, Tanzania"); // fallback or add to entity
+        content = content.replace("{{bankName}}", "CRDB BANK"); // fallback
+        content = content.replace("{{bankAccount}}", "0000000000000"); // fallback
+
         return content;
     }
 
     public byte[] generateMonthlyIncomePdf(MonthlyIncomeReport report) throws IOException {
-        Path reportsPath = Paths.get(REPORTS_DIR);
-        if (!Files.exists(reportsPath)) {
-            Files.createDirectories(reportsPath);
-        }
-
-        try (PdfWriter writer = new PdfWriter(new ByteArrayOutputStream()); // Write to BAOS for byte[] return
-             PdfDocument pdf = new PdfDocument(writer);
-             Document document = new Document(pdf)) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PdfWriter writer = new PdfWriter(baos);
+                PdfDocument pdf = new PdfDocument(writer);
+                Document document = new Document(pdf)) {
 
             document.add(new Paragraph("Monthly Income Report")
                     .setTextAlignment(TextAlignment.CENTER)
                     .setBold()
                     .setFontSize(24));
-            document.add(new Paragraph("For " + report.getReportMonth().format(DateTimeFormatter.ofPattern("MMMM yyyy")))
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setFontSize(18));
+            document.add(
+                    new Paragraph("For " + report.getReportMonth().format(DateTimeFormatter.ofPattern("MMMM yyyy")))
+                            .setTextAlignment(TextAlignment.CENTER)
+                            .setFontSize(18));
             document.add(new Paragraph("\n"));
 
             // Summary Table
-            Table summaryTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}));
+            Table summaryTable = new Table(UnitValue.createPercentArray(new float[] { 1, 1 }));
             summaryTable.setWidth(UnitValue.createPercentValue(80)).setHorizontalAlignment(HorizontalAlignment.CENTER);
 
             addSummaryRow(summaryTable, "Total Expected Income:", report.getTotalExpectedIncome());
@@ -160,14 +157,15 @@ public class PdfGenerationService {
             document.add(new Paragraph("Details:")
                     .setBold()
                     .setFontSize(14));
-            Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 1, 2, 1, 1, 1}));
+            Table detailsTable = new Table(UnitValue.createPercentArray(new float[] { 1, 2, 1, 2, 1, 1, 1 }));
             detailsTable.setWidth(UnitValue.createPercentValue(100));
 
-            addTableHeader(detailsTable, "Lease ID", "Tenant Name", "Room", "House", "Expected (TZS)", "Paid (TZS)", "Balance (TZS)");
+            addTableHeader(detailsTable, "Lease ID", "Tenant Name", "Room", "House", "Expected (TZS)", "Paid (TZS)",
+                    "Balance (TZS)");
 
             for (MonthlyIncomeReportEntry entry : report.getEntries()) {
                 addTableRow(detailsTable,
-                        entry.getLeaseId().toString().substring(0, 8) + "...", // Shorten UUID for table
+                        entry.getLeaseId().toString().substring(0, 8) + "...",
                         entry.getTenantName(),
                         entry.getRoomNumber(),
                         entry.getHouseName(),
@@ -178,19 +176,15 @@ public class PdfGenerationService {
             document.add(detailsTable);
 
             document.close();
-            return ((ByteArrayOutputStream) writer.getOutputStream()).toByteArray();
+            return baos.toByteArray();
         }
     }
 
     public byte[] generateVacancyPdf(VacancyReport report) throws IOException {
-        Path reportsPath = Paths.get(REPORTS_DIR);
-        if (!Files.exists(reportsPath)) {
-            Files.createDirectories(reportsPath);
-        }
-
-        try (PdfWriter writer = new PdfWriter(new ByteArrayOutputStream());
-             PdfDocument pdf = new PdfDocument(writer);
-             Document document = new Document(pdf)) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PdfWriter writer = new PdfWriter(baos);
+                PdfDocument pdf = new PdfDocument(writer);
+                Document document = new Document(pdf)) {
 
             document.add(new Paragraph("Vacancy Report")
                     .setTextAlignment(TextAlignment.CENTER)
@@ -211,7 +205,7 @@ public class PdfGenerationService {
             document.add(new Paragraph("Vacant Rooms Details:")
                     .setBold()
                     .setFontSize(14));
-            Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 2, 1, 3}));
+            Table detailsTable = new Table(UnitValue.createPercentArray(new float[] { 1, 1, 2, 1, 3 }));
             detailsTable.setWidth(UnitValue.createPercentValue(100));
 
             addTableHeader(detailsTable, "Room ID", "Room No.", "House Name", "House ID", "Description");
@@ -221,13 +215,13 @@ public class PdfGenerationService {
                         entry.getRoomId().toString().substring(0, 8) + "...",
                         entry.getRoomNumber(),
                         entry.getHouseName(),
-                        entry.getHouseId().toString().substring(0, 8) + "...", // FIX: Use getHouseId()
+                        entry.getHouseId().toString().substring(0, 8) + "...",
                         entry.getRoomDescription());
             }
             document.add(detailsTable);
 
             document.close();
-            return ((ByteArrayOutputStream) writer.getOutputStream()).toByteArray();
+            return baos.toByteArray();
         }
     }
 
@@ -251,6 +245,7 @@ public class PdfGenerationService {
 
     private void addSummaryRow(Table table, String label, BigDecimal value) {
         table.addCell(new Cell().add(new Paragraph(label)).setBold().setBorder(Border.NO_BORDER));
-        table.addCell(new Cell().add(new Paragraph(value.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + " TZS")).setTextAlignment(TextAlignment.RIGHT).setBorder(Border.NO_BORDER));
+        table.addCell(new Cell().add(new Paragraph(value.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + " TZS"))
+                .setTextAlignment(TextAlignment.RIGHT).setBorder(Border.NO_BORDER));
     }
 }

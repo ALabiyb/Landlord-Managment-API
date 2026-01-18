@@ -4,7 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tz.rental.landlord_management.api.rest.dto.ApiResponse;
-import com.tz.rental.landlord_management.application.dto.*;
+import com.tz.rental.landlord_management.application.dto.CreateHouseRequest;
+import com.tz.rental.landlord_management.application.dto.HouseResponse;
+import com.tz.rental.landlord_management.application.dto.CreateRoomRequest;
+import com.tz.rental.landlord_management.application.dto.RoomResponse;
+import com.tz.rental.landlord_management.application.dto.CreateTenantRequest;
+import com.tz.rental.landlord_management.application.dto.TenantResponse;
+import com.tz.rental.landlord_management.application.dto.CreateLeaseRequest;
+import com.tz.rental.landlord_management.application.dto.LeaseResponse;
+import com.tz.rental.landlord_management.application.dto.CreateContractTemplateRequest;
+import com.tz.rental.landlord_management.application.dto.ContractTemplateResponse;
+import com.tz.rental.landlord_management.application.dto.CreatePaymentRequest;
+import com.tz.rental.landlord_management.application.dto.PaymentResponse;
 import com.tz.rental.landlord_management.domain.model.valueobject.HouseType;
 import com.tz.rental.landlord_management.domain.model.valueobject.PaymentPeriod;
 import com.tz.rental.landlord_management.domain.model.valueobject.RoomStatus;
@@ -129,15 +140,17 @@ public class FullSystemE2ETest {
         houseRequest.setMonthlyCommonCharges(BigDecimal.valueOf(50000));
 
         MvcResult result = mockMvc.perform(post("/api/v1/houses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(houseRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(houseRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.name").value("Test House"))
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<HouseResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<HouseResponse>>() {});
+        ApiResponse<HouseResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<HouseResponse>>() {
+                });
         houseId = apiResponse.getData().getId();
         assertNotNull(houseId);
         System.out.println("Created House with ID: " + houseId);
@@ -151,15 +164,17 @@ public class FullSystemE2ETest {
         roomRequest.setMonthlyRent(BigDecimal.valueOf(250000));
 
         MvcResult result = mockMvc.perform(post("/api/v1/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(roomRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(roomRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.roomNumber").value("R101"))
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<RoomResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<RoomResponse>>() {});
+        ApiResponse<RoomResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<RoomResponse>>() {
+                });
         roomId = apiResponse.getData().getId();
         assertNotNull(roomId);
         System.out.println("Created Room with ID: " + roomId);
@@ -176,18 +191,21 @@ public class FullSystemE2ETest {
         tenantRequest.setPhoneNumber("+255" + nineDigitNumber);
         tenantRequest.setNationalId("TN" + nineDigitNumber + "10");
         tenantRequest.setEmergencyContactName("Emergency Contact");
-        tenantRequest.setEmergencyContactPhone("+255" + UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9));
+        tenantRequest.setEmergencyContactPhone(
+                "+255" + UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 9));
 
         MvcResult result = mockMvc.perform(post("/api/v1/tenants")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tenantRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenantRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.firstName").value("Test"))
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<TenantResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<TenantResponse>>() {});
+        ApiResponse<TenantResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<TenantResponse>>() {
+                });
         tenantId = apiResponse.getData().getId();
         assertNotNull(tenantId);
         System.out.println("Created Tenant with ID: " + tenantId);
@@ -203,8 +221,8 @@ public class FullSystemE2ETest {
         leaseRequest.setPaymentPeriod(PaymentPeriod.MONTHLY);
 
         MvcResult result = mockMvc.perform(post("/api/v1/leases")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(leaseRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(leaseRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.tenantId").value(tenantId.toString()))
@@ -212,7 +230,9 @@ public class FullSystemE2ETest {
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<LeaseResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<LeaseResponse>>() {});
+        ApiResponse<LeaseResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<LeaseResponse>>() {
+                });
         leaseId = apiResponse.getData().getId();
         assertNotNull(leaseId);
         System.out.println("Created Lease with ID: " + leaseId);
@@ -222,22 +242,26 @@ public class FullSystemE2ETest {
         String uniqueId = UUID.randomUUID().toString().substring(0, 8);
         CreateContractTemplateRequest templateRequest = new CreateContractTemplateRequest();
         templateRequest.setName("Standard Lease Template " + uniqueId);
-        templateRequest.setContent("This Lease Agreement is made between {{landlordName}} and {{tenantName}} for the property at {{houseAddress}}, Room {{roomNumber}}.\n" +
-                "Lease Period: From {{leaseStartDate}} to {{leaseEndDate}}.\n" +
-                "Monthly Rent: {{rentAmount}} TZS.\n\n" +
-                "Signatures:\nLandlord: {{landlordName}}\nTenant: {{tenantName}}\nDate: {{currentDate}}");
+        templateRequest.setContent(
+                "This Lease Agreement is made between {{landlordName}} and {{tenantName}} for the property at {{houseAddress}}, Room {{roomNumber}}.\n"
+                        +
+                        "Lease Period: From {{leaseStartDate}} to {{leaseEndDate}}.\n" +
+                        "Monthly Rent: {{rentAmount}} TZS.\n\n" +
+                        "Signatures:\nLandlord: {{landlordName}}\nTenant: {{tenantName}}\nDate: {{currentDate}}");
         templateRequest.setDescription("A standard template for residential lease agreements.");
 
         MvcResult result = mockMvc.perform(post("/api/v1/contract-templates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(templateRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(templateRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.name").value("Standard Lease Template " + uniqueId))
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<ContractTemplateResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<ContractTemplateResponse>>() {});
+        ApiResponse<ContractTemplateResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<ContractTemplateResponse>>() {
+                });
         contractTemplateId = apiResponse.getData().getId();
         assertNotNull(contractTemplateId);
         System.out.println("Created Contract Template with ID: " + contractTemplateId);
@@ -245,14 +269,16 @@ public class FullSystemE2ETest {
 
     private void generatePdfContractWithTemplate() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/v1/leases/" + leaseId + "/generate-contract")
-                        .param("templateId", contractTemplateId.toString()))
+                .param("templateId", contractTemplateId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.contractDocumentUrl").exists())
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<LeaseResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<LeaseResponse>>() {});
+        ApiResponse<LeaseResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<LeaseResponse>>() {
+                });
         contractDocumentUrl = apiResponse.getData().getContractDocumentUrl();
         assertNotNull(contractDocumentUrl);
         System.out.println("Generated PDF contract with template at: " + contractDocumentUrl);
@@ -266,15 +292,17 @@ public class FullSystemE2ETest {
         paymentRequest.setTransactionReference("PAYREF-" + UUID.randomUUID().toString().substring(0, 8));
 
         MvcResult result = mockMvc.perform(post("/api/v1/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(paymentRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(paymentRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.leaseId").value(leaseId.toString()))
                 .andReturn();
 
         String responseString = result.getResponse().getContentAsString();
-        ApiResponse<PaymentResponse> apiResponse = objectMapper.readValue(responseString, new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<PaymentResponse>>() {});
+        ApiResponse<PaymentResponse> apiResponse = objectMapper.readValue(responseString,
+                new com.fasterxml.jackson.core.type.TypeReference<ApiResponse<PaymentResponse>>() {
+                });
         paymentId = apiResponse.getData().getId();
         assertNotNull(paymentId);
         System.out.println("Recorded Payment with ID: " + paymentId);

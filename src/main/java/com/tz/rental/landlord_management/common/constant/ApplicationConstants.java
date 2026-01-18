@@ -17,7 +17,7 @@ public class ApplicationConstants {
     public static final String DEFAULT_LANGUAGE = "sw";
 
     // =============== VALIDATION PATTERNS ===============
-    public static final String PHONE_NUMBER_PATTERN = "^\\+255[0-9]{9}$";
+    public static final String PHONE_NUMBER_PATTERN = "^(\\+255|0)\\d{9}$";
     public static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
     public static final String NATIONAL_ID_PATTERN = "^[0-9]{16}$";
 
@@ -30,6 +30,7 @@ public class ApplicationConstants {
     public static final String STATUS_ACTIVE = "ACTIVE";
     public static final String STATUS_INACTIVE = "INACTIVE";
     public static final String STATUS_VACANT = "VACANT";
+    public static final String STATUS_RESERVED = "RESERVED";
     public static final String STATUS_OCCUPIED = "OCCUPIED";
     public static final String STATUS_MAINTENANCE = "MAINTENANCE";
     public static final String STATUS_PENDING = "PENDING";
@@ -41,10 +42,12 @@ public class ApplicationConstants {
     // =============== TANZANIAN REGIONS ===============
     public static final String[] TANZANIAN_REGIONS = {
             "Dar es Salaam", "Arusha", "Dodoma", "Mwanza", "Mbeya",
-            "Morogoro", "Tanga", "Kigoma", "Moshi", "Tabora",
-            "Songea", "Musoma", "Iringa", "Shinyanga", "Bukoba",
-            "Mtwara", "Lindi", "Ruvuma", "Kagera", "Geita",
-            "Simiyu", "Manyara", "Katavi", "Njombe", "Pwani"
+            "Morogoro", "Tanga", "Kigoma", "Kilimanjaro", "Tabora",
+            "Ruvuma", "Mara", "Iringa", "Shinyanga", "Kagera",
+            "Mtwara", "Lindi", "Geita", "Simiyu", "Manyara",
+            "Katavi", "Njombe", "Pwani", "Rukwa", "Singida", "Songwe",
+            "Mjini Magharibi", "Unguja Kaskazini", "Unguja Kusini",
+            "Pemba Kaskazini", "Pemba Kusini", "Unguja", "Pemba", "Zanzibar"
     };
 
     // =============== ERROR MESSAGES ===============

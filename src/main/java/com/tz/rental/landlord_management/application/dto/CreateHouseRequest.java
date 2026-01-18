@@ -51,7 +51,5 @@ public class CreateHouseRequest {
     private Boolean hasWater = false;
     private Boolean hasElectricity = false;
 
-    private List<String> imageUrls;
-
     private BigDecimal monthlyCommonCharges;
 }

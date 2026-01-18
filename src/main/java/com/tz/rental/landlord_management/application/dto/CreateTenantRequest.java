@@ -1,41 +1,75 @@
 package com.tz.rental.landlord_management.application.dto;
 
+import com.tz.rental.landlord_management.domain.model.valueobject.PaymentPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Request to create a new tenant")
 public class CreateTenantRequest {
 
     @NotBlank(message = "First name is required")
-    @Schema(description = "First name of the tenant", example = "Jane")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
-    @Schema(description = "Last name of the tenant", example = "Smith")
     private String lastName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
-    @Schema(description = "Email address of the tenant", example = "jane.smith@example.com")
     private String email;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+255[0-9]{9}$", message = "Phone number must be in format +255XXXXXXXXX")
-    @Schema(description = "Phone number of the tenant", example = "+255787654321")
+    @Pattern(regexp = "^(\\+255|0)\\d{9}$", message = "Phone number must be +255XXXXXXXXX or 0XXXXXXXXX")
     private String phoneNumber;
 
     @NotBlank(message = "National ID is required")
-    @Schema(description = "National ID of the tenant", example = "19900101-12345-1")
     private String nationalId;
 
-    @Schema(description = "Name of the emergency contact", example = "John Smith")
     private String emergencyContactName;
 
-    @Pattern(regexp = "^\\+255[0-9]{9}$", message = "Phone number must be in format +255XXXXXXXXX")
-    @Schema(description = "Phone number of the emergency contact", example = "+255712345678")
+    @Pattern(regexp = "^(\\+255|0)[0-9]{9}$", message = "Phone number must be +255XXXXXXXXX or 0XXXXXXXXX")
     private String emergencyContactPhone;
+
+    @NotNull(message = "Room ID is required")
+    private UUID roomId;
+
+    @NotNull(message = "Start date is required")
+    @FutureOrPresent(message = "Start date must be in the present or future")
+    private LocalDate startDate;
+
+    @NotNull(message = "End date is required")
+    @Future(message = "End date must be in the future")
+    private LocalDate endDate;
+
+    @NotNull(message = "Rent amount is required")
+    @Positive(message = "Rent amount must be positive")
+    private BigDecimal rentAmount;
+
+    @NotNull(message = "Payment period is required")
+    private PaymentPeriod paymentPeriod;
+
+    private String contractDocumentUrl;
+
+    @jakarta.validation.constraints.AssertTrue(message = "End date must be after start date")
+    public boolean isEndDateAfterStartDate() {
+        if (startDate == null || endDate == null)
+            return true;
+        return endDate.isAfter(startDate);
+    }
 }

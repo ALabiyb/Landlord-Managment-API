@@ -30,7 +30,8 @@ public class HouseResponse {
     private Boolean hasWater;
     private Boolean hasElectricity;
     private BigDecimal monthlyCommonCharges;
-    private List<String> imageUrls;
+    private List<HouseImageResponse> images;
+    private String primaryImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<RoomSummary> rooms;

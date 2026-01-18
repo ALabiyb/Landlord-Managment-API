@@ -24,7 +24,10 @@ services:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
       - db
+    volumes:
+      - ./uploads:/app/uploads
 
 volumes:
   db-data:
+
 

@@ -19,6 +19,7 @@ import java.util.UUID;
 public class PaymentEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,12 +32,18 @@ public class PaymentEntity {
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
 
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus status;
 
     @Column(name = "transaction_reference")
     private String transactionReference;
+
+    @Column(columnDefinition = "TEXT")
+    private String remarks;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

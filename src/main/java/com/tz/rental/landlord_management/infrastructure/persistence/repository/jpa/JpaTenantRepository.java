@@ -10,7 +10,12 @@ import java.util.UUID;
 @Repository
 public interface JpaTenantRepository extends JpaRepository<TenantEntity, UUID> {
     long countByLandlord(LandlordEntity landlord);
+
     boolean existsByEmail(String email);
+
     boolean existsByPhoneNumber(String phoneNumber);
+
     boolean existsByNationalId(String nationalId);
+
+    java.util.List<TenantEntity> findByLandlordId(UUID landlordId);
 }

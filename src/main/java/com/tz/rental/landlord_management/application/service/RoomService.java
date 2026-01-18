@@ -26,9 +26,13 @@ public class RoomService {
     private final JpaHouseRepository houseRepository;
 
     @Transactional
-    public RoomResponse createRoom(CreateRoomRequest request) {
+    public RoomResponse createRoom(UUID landlordId, CreateRoomRequest request) {
         HouseEntity houseEntity = houseRepository.findById(request.getHouseId())
                 .orElseThrow(() -> new NotFoundException("House not found with ID: " + request.getHouseId()));
+
+        if (!houseEntity.getLandlord().getId().equals(landlordId)) {
+            throw new NotFoundException("House not found or access denied");
+        }
 
         // TODO: Check if room number is unique within the house
 
@@ -44,16 +48,25 @@ public class RoomService {
     }
 
     @Transactional(readOnly = true)
-    public RoomResponse getRoomById(UUID id) {
+    public RoomResponse getRoomById(UUID landlordId, UUID id) {
         RoomEntity roomEntity = roomRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
+
+        if (!roomEntity.getHouse().getLandlord().getId().equals(landlordId)) {
+            throw new NotFoundException("Room not found or access denied");
+        }
+
         return mapEntityToResponse(roomEntity);
     }
 
     @Transactional(readOnly = true)
-    public List<RoomResponse> getAllRoomsForHouse(UUID houseId, RoomStatus status) {
+    public List<RoomResponse> getAllRoomsForHouse(UUID landlordId, UUID houseId, RoomStatus status) {
         HouseEntity houseEntity = houseRepository.findById(houseId)
                 .orElseThrow(() -> new NotFoundException("House not found with ID: " + houseId));
+
+        if (!houseEntity.getLandlord().getId().equals(landlordId)) {
+            throw new NotFoundException("House not found or access denied");
+        }
 
         List<RoomEntity> rooms;
         if (status != null) {
@@ -68,9 +81,13 @@ public class RoomService {
     }
 
     @Transactional
-    public RoomResponse updateRoom(UUID id, CreateRoomRequest request) {
+    public RoomResponse updateRoom(UUID landlordId, UUID id, CreateRoomRequest request) {
         RoomEntity roomEntity = roomRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
+
+        if (!roomEntity.getHouse().getLandlord().getId().equals(landlordId)) {
+            throw new NotFoundException("Room not found or access denied");
+        }
 
         mapRequestToEntity(request, roomEntity);
         RoomEntity updatedRoom = roomRepository.save(roomEntity);
@@ -78,9 +95,13 @@ public class RoomService {
     }
 
     @Transactional
-    public RoomResponse updateRoomStatus(UUID id, UpdateRoomStatusRequest request) {
+    public RoomResponse updateRoomStatus(UUID landlordId, UUID id, UpdateRoomStatusRequest request) {
         RoomEntity roomEntity = roomRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
+
+        if (!roomEntity.getHouse().getLandlord().getId().equals(landlordId)) {
+            throw new NotFoundException("Room not found or access denied");
+        }
 
         roomEntity.setStatus(request.getStatus());
         RoomEntity updatedRoom = roomRepository.save(roomEntity);
@@ -88,9 +109,14 @@ public class RoomService {
     }
 
     @Transactional
-    public void deleteRoom(UUID id) {
+    public void deleteRoom(UUID landlordId, UUID id) {
         RoomEntity roomEntity = roomRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ROOM_NOT_FOUND_MSG + id));
+
+        if (!roomEntity.getHouse().getLandlord().getId().equals(landlordId)) {
+            throw new NotFoundException("Room not found or access denied");
+        }
+
         roomRepository.delete(roomEntity);
     }
 

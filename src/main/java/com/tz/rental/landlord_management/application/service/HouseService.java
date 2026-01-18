@@ -39,7 +39,8 @@ public class HouseService {
     @Transactional
     public HouseResponse createHouse(CreateHouseRequest request) {
         houseRepository.findByPropertyCode(request.getPropertyCode()).ifPresent(h -> {
-            throw new AlreadyExistsException("House with property code " + request.getPropertyCode() + " already exists.");
+            throw new AlreadyExistsException(
+                    "House with property code " + request.getPropertyCode() + " already exists.");
         });
 
         LandlordEntity landlord = getCurrentLandlord();
@@ -56,8 +57,14 @@ public class HouseService {
 
     @Transactional(readOnly = true)
     public HouseResponse getHouseById(UUID id, Boolean includeRooms) {
+        LandlordEntity currentLandlord = getCurrentLandlord();
         HouseEntity houseEntity = houseRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(HOUSE_NOT_FOUND_MSG + id));
+
+        if (!houseEntity.getLandlord().getId().equals(currentLandlord.getId())) {
+            throw new NotFoundException("House not found or access denied");
+        }
+
         return mapEntityToResponse(houseEntity, includeRooms != null && includeRooms);
     }
 
@@ -77,8 +84,7 @@ public class HouseService {
                     subquery.select(subRoot);
                     subquery.where(
                             cb.equal(subRoot.get(HOUSE_FIELD), root), // Correlated subquery
-                            cb.equal(subRoot.get("status"), RoomStatus.VACANT)
-                    );
+                            cb.equal(subRoot.get("status"), RoomStatus.VACANT));
                     predicates.add(cb.exists(subquery));
 
                 } else if (status.equalsIgnoreCase("OCCUPIED")) {
@@ -96,8 +102,7 @@ public class HouseService {
                     subquery.select(subRoot);
                     subquery.where(
                             cb.equal(subRoot.get(HOUSE_FIELD), root), // Correlated subquery
-                            cb.notEqual(subRoot.get("status"), RoomStatus.OCCUPIED)
-                    );
+                            cb.notEqual(subRoot.get("status"), RoomStatus.OCCUPIED));
                     predicates.add(cb.not(cb.exists(subquery)));
                 }
             }
@@ -123,13 +128,19 @@ public class HouseService {
 
     @Transactional
     public HouseResponse updateHouse(UUID id, CreateHouseRequest request) {
+        LandlordEntity currentLandlord = getCurrentLandlord();
         HouseEntity houseEntity = houseRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(HOUSE_NOT_FOUND_MSG + id));
+
+        if (!houseEntity.getLandlord().getId().equals(currentLandlord.getId())) {
+            throw new NotFoundException("House not found or access denied");
+        }
 
         // Check for property code uniqueness if it's being changed
         if (!houseEntity.getPropertyCode().equals(request.getPropertyCode())) {
             houseRepository.findByPropertyCode(request.getPropertyCode()).ifPresent(h -> {
-                throw new AlreadyExistsException("House with property code " + request.getPropertyCode() + " already exists.");
+                throw new AlreadyExistsException(
+                        "House with property code " + request.getPropertyCode() + " already exists.");
             });
         }
 
@@ -140,8 +151,14 @@ public class HouseService {
 
     @Transactional
     public void deleteHouse(UUID id) {
+        LandlordEntity currentLandlord = getCurrentLandlord();
         HouseEntity houseEntity = houseRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(HOUSE_NOT_FOUND_MSG + id));
+
+        if (!houseEntity.getLandlord().getId().equals(currentLandlord.getId())) {
+            throw new NotFoundException("House not found or access denied");
+        }
+
         houseRepository.delete(houseEntity);
     }
 
@@ -166,11 +183,32 @@ public class HouseService {
         entity.setHasSecurity(request.getHasSecurity());
         entity.setHasWater(request.getHasWater());
         entity.setHasElectricity(request.getHasElectricity());
-        entity.setImageUrls(request.getImageUrls());
+        // imageUrls removed from CreateHouseRequest and HouseEntity
         entity.setMonthlyCommonCharges(request.getMonthlyCommonCharges());
     }
 
     private HouseResponse mapEntityToResponse(HouseEntity entity, boolean includeRooms) {
+        List<com.tz.rental.landlord_management.application.dto.HouseImageResponse> imageResponses = entity.getImages()
+                .stream()
+                .map(img -> com.tz.rental.landlord_management.application.dto.HouseImageResponse.builder()
+                        .id(img.getId())
+                        .imageUrl("/api/images/" + img.getFileName()) // Placeholder URL logic
+                        .thumbnailUrl(img.getThumbnailPath() != null
+                                ? "/api/images/thumbnails/"
+                                        + java.nio.file.Paths.get(img.getThumbnailPath()).getFileName().toString()
+                                : null)
+                        .caption(img.getCaption())
+                        .isPrimary(img.isPrimary())
+                        .displayOrder(img.getDisplayOrder())
+                        .build())
+                .collect(java.util.stream.Collectors.toList());
+
+        String primaryImageUrl = imageResponses.stream()
+                .filter(com.tz.rental.landlord_management.application.dto.HouseImageResponse::isPrimary)
+                .findFirst()
+                .map(com.tz.rental.landlord_management.application.dto.HouseImageResponse::getImageUrl)
+                .orElse(imageResponses.isEmpty() ? null : imageResponses.get(0).getImageUrl());
+
         HouseResponse.HouseResponseBuilder builder = HouseResponse.builder()
                 .id(entity.getId())
                 .propertyCode(entity.getPropertyCode())
@@ -188,7 +226,8 @@ public class HouseService {
                 .hasWater(entity.getHasWater())
                 .hasElectricity(entity.getHasElectricity())
                 .monthlyCommonCharges(entity.getMonthlyCommonCharges())
-                .imageUrls(entity.getImageUrls())
+                .images(imageResponses)
+                .primaryImageUrl(primaryImageUrl)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt());
 

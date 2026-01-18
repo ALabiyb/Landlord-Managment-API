@@ -2,16 +2,25 @@ package com.tz.rental.landlord_management.application.dto;
 
 import com.tz.rental.landlord_management.domain.model.valueobject.PaymentPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Request to create a new lease agreement")
 public class CreateLeaseRequest {
 
@@ -34,10 +43,26 @@ public class CreateLeaseRequest {
     private LocalDate endDate;
 
     @NotNull(message = "Rent amount is required")
+    @Positive(message = "Rent amount must be positive")
+    @DecimalMin(value = "0.01", message = "Rent amount must be greater than zero")
     @Schema(description = "Monthly rent amount", example = "500000.00")
     private BigDecimal rentAmount;
 
     @NotNull(message = "Payment period is required")
     @Schema(description = "Payment frequency", example = "MONTHLY")
     private PaymentPeriod paymentPeriod;
+
+    @Schema(description = "URL to the signed contract document", example = "https://storage.example.com/contracts/lease-123.pdf")
+    private String contractDocumentUrl;
+
+    /**
+     * Custom validation to ensure end date is after start date.
+     */
+    @AssertTrue(message = "End date must be after start date")
+    public boolean isEndDateAfterStartDate() {
+        if (startDate == null || endDate == null) {
+            return true; // Let @NotNull handle null validation
+        }
+        return endDate.isAfter(startDate);
+    }
 }

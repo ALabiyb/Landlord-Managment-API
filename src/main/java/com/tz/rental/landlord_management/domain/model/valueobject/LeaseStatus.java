@@ -1,6 +1,7 @@
 package com.tz.rental.landlord_management.domain.model.valueobject;
 
 public enum LeaseStatus {
+    PENDING, // Newly created, not yet active
     ACTIVE,
     EXPIRED,
     TERMINATED,

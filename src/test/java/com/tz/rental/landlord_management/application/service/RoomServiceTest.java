@@ -5,6 +5,7 @@ import com.tz.rental.landlord_management.application.dto.RoomResponse;
 import com.tz.rental.landlord_management.application.dto.UpdateRoomStatusRequest;
 import com.tz.rental.landlord_management.domain.model.valueobject.RoomStatus;
 import com.tz.rental.landlord_management.infrastructure.persistence.entity.HouseEntity;
+import com.tz.rental.landlord_management.infrastructure.persistence.entity.LandlordEntity;
 import com.tz.rental.landlord_management.infrastructure.persistence.entity.RoomEntity;
 import com.tz.rental.landlord_management.infrastructure.persistence.repository.jpa.JpaHouseRepository;
 import com.tz.rental.landlord_management.infrastructure.persistence.repository.jpa.JpaRoomRepository;
@@ -48,6 +49,10 @@ class RoomServiceTest {
         testHouse.setId(UUID.randomUUID());
         testHouse.setName("Test House");
 
+        LandlordEntity landlord = new LandlordEntity();
+        landlord.setId(UUID.randomUUID());
+        testHouse.setLandlord(landlord);
+
         testRoom = new RoomEntity();
         testRoom.setId(UUID.randomUUID());
         testRoom.setHouse(testHouse);
@@ -68,7 +73,7 @@ class RoomServiceTest {
         when(roomRepository.save(any(RoomEntity.class))).thenReturn(testRoom);
 
         // Act
-        RoomResponse response = roomService.createRoom(createRoomRequest);
+        RoomResponse response = roomService.createRoom(testHouse.getLandlord().getId(), createRoomRequest);
 
         // Assert
         assertNotNull(response);
@@ -83,7 +88,7 @@ class RoomServiceTest {
         when(roomRepository.findById(testRoom.getId())).thenReturn(Optional.of(testRoom));
 
         // Act
-        RoomResponse response = roomService.getRoomById(testRoom.getId());
+        RoomResponse response = roomService.getRoomById(testHouse.getLandlord().getId(), testRoom.getId());
 
         // Assert
         assertNotNull(response);
@@ -97,7 +102,8 @@ class RoomServiceTest {
         when(roomRepository.findByHouse(testHouse)).thenReturn(Collections.singletonList(testRoom));
 
         // Act
-        List<RoomResponse> response = roomService.getAllRoomsForHouse(testHouse.getId(), null);
+        List<RoomResponse> response = roomService.getAllRoomsForHouse(testHouse.getLandlord().getId(),
+                testHouse.getId(), null);
 
         // Assert
         assertNotNull(response);
@@ -115,7 +121,8 @@ class RoomServiceTest {
         updateRequest.setMonthlyRent(new BigDecimal("120000"));
 
         // Act
-        RoomResponse response = roomService.updateRoom(testRoom.getId(), updateRequest);
+        RoomResponse response = roomService.updateRoom(testHouse.getLandlord().getId(), testRoom.getId(),
+                updateRequest);
 
         // Assert
         assertNotNull(response);
@@ -132,7 +139,8 @@ class RoomServiceTest {
         statusRequest.setStatus(RoomStatus.MAINTENANCE);
 
         // Act
-        RoomResponse response = roomService.updateRoomStatus(testRoom.getId(), statusRequest);
+        RoomResponse response = roomService.updateRoomStatus(testHouse.getLandlord().getId(), testRoom.getId(),
+                statusRequest);
 
         // Assert
         assertNotNull(response);
@@ -145,7 +153,7 @@ class RoomServiceTest {
         when(roomRepository.findById(testRoom.getId())).thenReturn(Optional.of(testRoom));
 
         // Act
-        roomService.deleteRoom(testRoom.getId());
+        roomService.deleteRoom(testHouse.getLandlord().getId(), testRoom.getId());
 
         // Assert
         verify(roomRepository).delete(testRoom);

@@ -66,10 +66,9 @@ public class HouseEntity {
     @Column(name = "has_electricity")
     private Boolean hasElectricity;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "house_image_urls", joinColumns = @JoinColumn(name = "house_id"))
-    @Column(name = "image_url")
-    private List<String> imageUrls;
+    @OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC")
+    private List<HouseImageEntity> images = new ArrayList<>();
 
     @Column(name = "monthly_common_charges")
     private BigDecimal monthlyCommonCharges;
